@@ -6,6 +6,7 @@ global using System.Text;
 global using System.Threading.Tasks;
 global using CsLox;
 global using static CsLox.OpCode;
+global using Value = System.Double;
 
 using System.Runtime.InteropServices;
 

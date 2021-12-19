@@ -6,19 +6,39 @@ enum OpCode : byte
 	OP_RETURN
 }
 
-class Chunk : List<byte>
+class Chunk
 {
-	public void write(OpCode oc)
+	byte[] code;
+	int capacity;
+	int count;
+
+	public Chunk()
 	{
-		this.Add((byte)oc);
+		capacity = 8;
+		code = new byte[capacity];
 	}
+
+	public void write(byte by)
+	{
+		if (capacity < count + 1)
+		{
+			int oldCapacity = capacity;
+			capacity *= 2;
+			var oldCode = code;
+			code = new byte[capacity];
+			Array.Copy(oldCode, code, oldCapacity);
+		}
+		code[count++] = by;
+	}
+
+	public void write(OpCode oc) => write((byte)oc);
 
 	public void disassemble(string name, TextWriter? tw = null)
 	{
 		tw ??= Console.Out;
 		tw.WriteLine($"== {name} ==");
 
-		for (int offset = 0; offset < Count;)
+		for (int offset = 0; offset < count;)
 		{
 			offset = disassembleInstruction(offset, tw);
 		}
@@ -27,7 +47,7 @@ class Chunk : List<byte>
 	int disassembleInstruction(int offset, TextWriter tw)
 	{
 		tw.Write($"{offset:0000} ");
-		var instruction = (OpCode)this[offset];
+		var instruction = (OpCode)code[offset];
 		switch (instruction)
 		{
 			case OP_RETURN:
