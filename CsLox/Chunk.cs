@@ -13,10 +13,10 @@ enum OpCode : byte
 
 class Chunk
 {
-	byte[] code;
+	internal byte[] code;
 	int capacity;
 	int count;
-	ValueArray constants;
+	internal ValueArray constants;
 	List<int> lines;
 
 	public Chunk()
@@ -60,7 +60,7 @@ class Chunk
 		}
 	}
 
-	int disassembleInstruction(int offset, TextWriter tw)
+	internal int disassembleInstruction(int offset, TextWriter tw)
 	{
 		tw.Write($"{offset:0000} ");
 		if (offset > 0 && lines[offset] == lines[offset - 1])
