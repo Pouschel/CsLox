@@ -24,10 +24,10 @@ class Chunk
 		capacity = 8;
 		code = new byte[capacity];
 		constants = new ValueArray();
-		lines = new List<int>();
+		lines = new();
 	}
 
-	public void write(byte by)
+	public void write(byte by, int line = 0)
 	{
 		if (capacity < count + 1)
 		{
@@ -38,9 +38,10 @@ class Chunk
 			Array.Copy(oldCode, code, oldCapacity);
 		}
 		code[count++] = by;
+		lines.Add(line);
 	}
 
-	public void write(OpCode oc) => write((byte)oc);
+	public void write(OpCode oc, int line = 0) => write((byte)oc, line);
 
 	public int addConstant(Value value)
 	{
@@ -62,6 +63,11 @@ class Chunk
 	int disassembleInstruction(int offset, TextWriter tw)
 	{
 		tw.Write($"{offset:0000} ");
+		if (offset > 0 && lines[offset] == lines[offset - 1])
+			tw.Write("   | ");
+		else
+			tw.Write("{0,4} ", lines[offset]);
+
 		var instruction = (OpCode)code[offset];
 		switch (instruction)
 		{
@@ -70,7 +76,8 @@ class Chunk
 				return offset + 1;
 			case OP_CONSTANT:
 				var constant = code[offset + 1];
-				tw.WriteLine(string.Format( CultureInfo.InvariantCulture, "{0} {1}", instruction, constants[constant]));
+				tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'", 
+					instruction, constant, constants[constant]));
 				return offset + 2;
 			default:
 				tw.WriteLine($"Unknown opcode {instruction}");
