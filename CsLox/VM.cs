@@ -1,11 +1,4 @@
 ﻿#define DEBUG_TRACE_EXECUTION
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace CsLox;
 
 public enum InterpretResult
@@ -19,23 +12,41 @@ public enum InterpretResult
 public class VM
 {
 	Chunk chunk;
+	List<Value> stack;
+	
 	int ip;
 
 	internal VM(Chunk chunk)
 	{
 		this.chunk = chunk;
+		stack = new();
 	}
 
 	private byte ReadByte() => chunk.code[ip++];
 
 	private Value ReadConstant() => chunk.constants[ReadByte()];
 
+	private void push(Value val) => stack.Add(val);
+
+	private Value pop()
+	{
+		var ret = stack[stack.Count - 1];
+		stack.RemoveAt(stack.Count - 1);
+		return ret;
+	}
 	public InterpretResult interpret()
 	{
 		this.ip = 0;
+		stack = new();
 		while (true)
 		{
 #if DEBUG_TRACE_EXECUTION
+			Console.Write("          ");
+			foreach (var slot in stack)
+			{
+				Console.Write($"[{slot}]");
+			}
+			Console.WriteLine();
 			chunk.disassembleInstruction(ip, Console.Out);
 #endif
 			var instruction = (OpCode)ReadByte();
@@ -44,7 +55,7 @@ public class VM
 				case OP_RETURN: return InterpretResult.INTERPRET_OK;
 				case OP_CONSTANT:
 					Value constant = ReadConstant();
-					Console.WriteLine(constant);
+					push(constant);
 					break;
 			}
 		}
