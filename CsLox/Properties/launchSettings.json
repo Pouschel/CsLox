@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CsLox": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Code\\CsLox\\Examples\\Ex1.lox"
+    }
+  }
+}
