@@ -25,6 +25,14 @@ struct Parser
 	public bool panicMode;
 }
 
+class ParseRule
+{
+	public Action? prefix;
+	public Action? infix;
+	public Precedence precedence;
+}
+
+
 internal class Compiler
 {
 	Scanner scanner;
@@ -34,8 +42,67 @@ internal class Compiler
 	Parser parser;
 	string fileName;
 
+	ParseRule[] rules;
+
+	void InitTable()
+	{
+		SetRule(TOKEN_LEFT_PAREN, grouping, null);
+		SetRule(TOKEN_RIGHT_PAREN, null, null, PREC_NONE);
+		SetRule(TOKEN_LEFT_BRACE, null, null, PREC_NONE);
+		SetRule(TOKEN_RIGHT_BRACE, null, null, PREC_NONE);
+		SetRule(TOKEN_COMMA, null, null, PREC_NONE);
+		SetRule(TOKEN_DOT, null, null, PREC_NONE);
+		SetRule(TOKEN_MINUS, unary, binary, PREC_TERM);
+		SetRule(TOKEN_PLUS, null, binary, PREC_TERM);
+		SetRule(TOKEN_SEMICOLON, null, null, PREC_NONE);
+		SetRule(TOKEN_SLASH, null, binary, PREC_FACTOR);
+		SetRule(TOKEN_STAR, null, binary, PREC_FACTOR);
+		SetRule(TOKEN_BANG, null, null, PREC_NONE);
+		SetRule(TOKEN_BANG_EQUAL, null, null, PREC_NONE);
+		SetRule(TOKEN_EQUAL, null, null, PREC_NONE);
+		SetRule(TOKEN_EQUAL_EQUAL, null, null, PREC_NONE);
+		SetRule(TOKEN_GREATER, null, null, PREC_NONE);
+		SetRule(TOKEN_GREATER_EQUAL, null, null, PREC_NONE);
+		SetRule(TOKEN_LESS, null, null, PREC_NONE);
+		SetRule(TOKEN_LESS_EQUAL, null, null, PREC_NONE);
+		SetRule(TOKEN_IDENTIFIER, null, null, PREC_NONE);
+		SetRule(TOKEN_STRING, null, null, PREC_NONE);
+		SetRule(TOKEN_NUMBER, number, null, PREC_NONE);
+		SetRule(TOKEN_AND, null, null, PREC_NONE);
+		SetRule(TOKEN_CLASS, null, null, PREC_NONE);
+		SetRule(TOKEN_ELSE, null, null, PREC_NONE);
+		SetRule(TOKEN_FALSE, null, null, PREC_NONE);
+		SetRule(TOKEN_FOR, null, null, PREC_NONE);
+		SetRule(TOKEN_FUN, null, null, PREC_NONE);
+		SetRule(TOKEN_IF, null, null, PREC_NONE);
+		SetRule(TOKEN_NIL, null, null, PREC_NONE);
+		SetRule(TOKEN_OR, null, null, PREC_NONE);
+		SetRule(TOKEN_PRINT, null, null, PREC_NONE);
+		SetRule(TOKEN_RETURN, null, null, PREC_NONE);
+		SetRule(TOKEN_SUPER, null, null, PREC_NONE);
+		SetRule(TOKEN_THIS, null, null, PREC_NONE);
+		SetRule(TOKEN_TRUE, null, null, PREC_NONE);
+		SetRule(TOKEN_VAR, null, null, PREC_NONE);
+		SetRule(TOKEN_WHILE, null, null, PREC_NONE);
+		SetRule(TOKEN_ERROR, null, null, PREC_NONE);
+		SetRule(TOKEN_EOF, null, null, PREC_NONE);
+
+		void SetRule(TokenType tt, Action? prefix, Action? infix, Precedence prec = PREC_NONE)
+		{
+			var rule = new ParseRule
+			{
+				prefix = prefix,
+				infix = infix,
+				precedence = prec
+			};
+			rules[(int)tt] = rule;
+		}
+	}
+
 	public Compiler(string source, string fileName = "")
 	{
+		rules = new ParseRule[(int)TOKEN_EOF + 1];
+		InitTable();
 		this.fileName = fileName;
 		scanner = new Scanner(source);
 		compilingChunk = rootChunk = new Chunk();
@@ -59,8 +126,23 @@ internal class Compiler
 	}
 	void parsePrecedence(Precedence precedence)
 	{
-		// What goes here?
+		advance();
+		var prefixRule = getRule(parser.previous.type).prefix;
+		if (prefixRule == null)
+		{
+			error("Expect expression.");
+			return;
+		}
+		prefixRule();
+		while (precedence <= getRule(parser.current.type).precedence)
+		{
+			advance();
+			var infixRule = getRule(parser.previous.type).infix;
+			infixRule!();
+		}
 	}
+
+	ParseRule getRule(TokenType type) => rules[(int)type];
 
 	void advance()
 	{
@@ -101,6 +183,21 @@ internal class Compiler
 		}
 	}
 
+	void binary()
+	{
+		TokenType operatorType = parser.previous.type;
+		ParseRule rule = getRule(operatorType);
+		parsePrecedence(rule.precedence + 1);
+
+		switch (operatorType)
+		{
+			case TOKEN_PLUS: emitByte(OP_ADD); break;
+			case TOKEN_MINUS: emitByte(OP_SUBTRACT); break;
+			case TOKEN_STAR: emitByte(OP_MULTIPLY); break;
+			case TOKEN_SLASH: emitByte(OP_DIVIDE); break;
+			default: return; // Unreachable.
+		}
+	}
 
 	void consume(TokenType type, string message)
 	{
