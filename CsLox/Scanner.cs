@@ -57,6 +57,7 @@ internal class Scanner
 		start = current;
 		if (isAtEnd()) return makeToken(TOKEN_EOF);
 		char c = advance();
+		if (isAlpha(c)) return identifier();
 		if (isDigit(c)) return number();
 		switch (c)
 		{
@@ -90,6 +91,12 @@ internal class Scanner
 	}
 
 	static bool isDigit(char c) => c >= '0' && c <= '9';
+	static bool isAlpha(char c)
+	{
+		return (c >= 'a' && c <= 'z') ||
+					 (c >= 'A' && c <= 'Z') ||
+						c == '_';
+	}
 
 	Token number()
 	{
@@ -102,6 +109,62 @@ internal class Scanner
 			while (isDigit(peek())) advance();
 		}
 		return makeToken(TOKEN_NUMBER);
+	}
+
+	Token identifier()
+	{
+		while (isAlpha(peek()) || isDigit(peek())) advance();
+		return makeToken(identifierType());
+	}
+
+	TokenType identifierType()
+	{
+		switch (source[start])
+		{
+			case 'a': return checkKeyword(1, "nd", TOKEN_AND);
+			case 'c': return checkKeyword(1, "lass", TOKEN_CLASS);
+			case 'e': return checkKeyword(1, "lse", TOKEN_ELSE);
+			case 'f':
+				if (current - start > 1)
+				{
+					switch (source[start+1])
+					{
+						case 'a': return checkKeyword(2, "lse", TOKEN_FALSE);
+						case 'o': return checkKeyword(2, "r", TOKEN_FOR);
+						case 'u': return checkKeyword(2, "n", TOKEN_FUN);
+					}
+				}
+				break;
+			case 'i': return checkKeyword(1, "f", TOKEN_IF);
+			case 'n': return checkKeyword(1, "il", TOKEN_NIL);
+			case 'o': return checkKeyword(1, "r", TOKEN_OR);
+			case 'p': return checkKeyword(1, "rint", TOKEN_PRINT);
+			case 'r': return checkKeyword(1, "eturn", TOKEN_RETURN);
+			case 's': return checkKeyword(1, "uper", TOKEN_SUPER);
+			case 't':
+				if (current - start > 1)
+				{
+					switch (source[start + 1])
+					{
+						case 'h': return checkKeyword(2, "is", TOKEN_THIS);
+						case 'r': return checkKeyword(2, "ue", TOKEN_TRUE);
+					}
+				}
+				break;
+			case 'v': return checkKeyword(1, "ar", TOKEN_VAR);
+			case 'w': return checkKeyword(1, "hile", TOKEN_WHILE);
+		}
+		return TOKEN_IDENTIFIER;
+	}
+
+	TokenType checkKeyword(int start, string rest, TokenType type)
+	{
+		if (this.current - this.start != start + rest.Length) return TOKEN_IDENTIFIER;
+		for (int i = 0; i < rest.Length; i++)
+		{
+			if (source[start + this.start + i] != rest[i]) return TOKEN_IDENTIFIER;
+		}
+		return type;
 	}
 
 	Token scanString()
