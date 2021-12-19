@@ -52,12 +52,24 @@ public class VM
 			var instruction = (OpCode)ReadByte();
 			switch (instruction)
 			{
+				case OP_ADD: PopAndOp((a, b) => a + b); break;
+				case OP_SUBTRACT: PopAndOp((a, b) => a - b);  break;
+				case OP_MULTIPLY: PopAndOp((a, b) => a * b); break;
+				case OP_DIVIDE: PopAndOp((a, b) => a / b); break;
+				case OP_NEGATE: push(-pop()); break;
 				case OP_RETURN: return InterpretResult.INTERPRET_OK;
 				case OP_CONSTANT:
 					Value constant = ReadConstant();
 					push(constant);
 					break;
 			}
+		}
+
+		void PopAndOp(Func<Value,Value,Value> func)
+		{
+			var b = pop();
+			var a = pop();
+			push(func(a, b));
 		}
 	}
 }

@@ -7,6 +7,11 @@ namespace CsLox;
 enum OpCode : byte
 {
 	OP_CONSTANT,
+	OP_ADD,
+	OP_SUBTRACT,
+	OP_MULTIPLY,
+	OP_DIVIDE, 
+	OP_NEGATE,
 	OP_RETURN,
 }
 
@@ -43,6 +48,13 @@ class Chunk
 
 	public void write(OpCode oc, int line = 0) => write((byte)oc, line);
 
+	public void writeConstant(Value val)
+	{
+		write(OP_CONSTANT);
+		var cons = addConstant(val);
+		write((byte)cons);
+	}
+
 	public int addConstant(Value value)
 	{
 		constants.write(value);
@@ -71,7 +83,12 @@ class Chunk
 		var instruction = (OpCode)code[offset];
 		switch (instruction)
 		{
-			case OP_RETURN:
+			case OP_RETURN: 			
+			case OP_NEGATE:
+			case OP_ADD:
+			case OP_SUBTRACT:
+			case OP_MULTIPLY:
+			case OP_DIVIDE:
 				tw.WriteLine(instruction);
 				return offset + 1;
 			case OP_CONSTANT:
