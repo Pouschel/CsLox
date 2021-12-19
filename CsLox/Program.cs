@@ -1,14 +1,8 @@
-﻿
-global using System;
+﻿global using System;
 global using System.Collections.Generic;
-global using System.Linq;
-global using System.Text;
-global using System.Threading.Tasks;
 global using CsLox;
 global using static CsLox.OpCode;
-global using Value = System.Double;
 
-using System.Runtime.InteropServices;
 
 class Program
 {
@@ -16,6 +10,9 @@ class Program
 	static void Main()
 	{
 		Chunk chunk = new Chunk();
+		int constant = chunk.addConstant(1.2);
+		chunk.write(OP_CONSTANT);
+		chunk.write((byte) constant);
 		chunk.write(OP_RETURN);
 		chunk.disassemble("test");
 

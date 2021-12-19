@@ -1,21 +1,30 @@
-﻿namespace CsLox;
+﻿
+using System.Globalization;
+
+namespace CsLox;
 
 
 enum OpCode : byte
 {
-	OP_RETURN
+	OP_CONSTANT,
+	OP_RETURN,
 }
+
 
 class Chunk
 {
 	byte[] code;
 	int capacity;
 	int count;
+	ValueArray constants;
+	List<int> lines;
 
 	public Chunk()
 	{
 		capacity = 8;
 		code = new byte[capacity];
+		constants = new ValueArray();
+		lines = new List<int>();
 	}
 
 	public void write(byte by)
@@ -32,6 +41,12 @@ class Chunk
 	}
 
 	public void write(OpCode oc) => write((byte)oc);
+
+	public int addConstant(Value value)
+	{
+		constants.write(value);
+		return constants.Count - 1;
+	}
 
 	public void disassemble(string name, TextWriter? tw = null)
 	{
@@ -53,6 +68,10 @@ class Chunk
 			case OP_RETURN:
 				tw.WriteLine(instruction);
 				return offset + 1;
+			case OP_CONSTANT:
+				var constant = code[offset + 1];
+				tw.WriteLine(string.Format( CultureInfo.InvariantCulture, "{0} {1}", instruction, constants[constant]));
+				return offset + 2;
 			default:
 				tw.WriteLine($"Unknown opcode {instruction}");
 				return offset + 1;
