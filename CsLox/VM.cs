@@ -1,4 +1,5 @@
 ﻿#define DEBUG_TRACE_EXECUTION
+global using static CsLox.InterpretResult;
 namespace CsLox;
 
 public enum InterpretResult

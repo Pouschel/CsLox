@@ -7,23 +7,29 @@ global using static CsLox.OpCode;
 class Program
 {
 
-	static void Main()
+	static void Main(string[] args)
 	{
-
-		Chunk chunk = new Chunk();
-		var vm = new VM(chunk);
-		chunk.writeConstant(1.2);
-		chunk.writeConstant(3.4);
-		chunk.write(OP_ADD);
-		chunk.writeConstant(5.6);
-		chunk.write(OP_DIVIDE);
-		chunk.write(OP_NEGATE);
-		chunk.write(OP_RETURN, 123);
-		chunk.disassemble("test");
-		Console.WriteLine("--- Running");
-		vm.interpret();
+		Console.WriteLine("CsLox v1");
+		if (args.Length > 0)
+			runFile(args[0]);
 
 		Console.ReadLine();
+
+	}
+
+	static void runFile(string path)
+	{
+
+		string source = File.ReadAllText(path);
+		InterpretResult result = interpret(source);
+		if (result == INTERPRET_COMPILE_ERROR) Environment.Exit(65);
+		if (result == INTERPRET_RUNTIME_ERROR) Environment.Exit(70);
+	}
+
+	static InterpretResult interpret(string source)
+	{
+		new Compiler(source).compile();
+		return INTERPRET_OK;
 	}
 
 }
