@@ -20,19 +20,26 @@ class Program
 
 	static void runFile(string path)
 	{
-
 		string source = File.ReadAllText(path);
-		InterpretResult result = interpret(source);
+		DumpTokens(source);
+		InterpretResult result = interpret(source, path);
 		if (result == INTERPRET_COMPILE_ERROR) Environment.Exit(65);
 		if (result == INTERPRET_RUNTIME_ERROR) Environment.Exit(70);
 	}
 
-	static InterpretResult interpret(string source)
+	static InterpretResult interpret(string source, string fileName)
 	{
-		new Compiler(source).compile();
-		return INTERPRET_OK;
+		var compiler = new Compiler(source, fileName);
+		if (!compiler.compile())
+			return INTERPRET_COMPILE_ERROR;
+		VM vm = new VM(compiler.CompiledChunk);
+		return vm.interpret();
 	}
 
+	static void DumpTokens(string source)
+	{
+		new Compiler(source).DumpTokens();
+	}
 }
 
 class Globals

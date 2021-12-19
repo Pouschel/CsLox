@@ -48,7 +48,13 @@ internal class Scanner
 	public Scanner(string source)
 	{
 		this.source = source;
+		Reset();
+	}
+
+	public void Reset()
+	{
 		this.line = 1;
+		this.start = this.current = 0;
 	}
 
 	public Token scanToken()
@@ -219,7 +225,7 @@ internal class Scanner
 	}
 
 	char advance() => source[current++];
-	char peek() => source[current];
+	char peek() => current >= source.Length ? '\0' : source[current];
 	char peekNext() => current >= source.Length - 1 ? '\0' : source[current + 1];
 
 	bool isAtEnd()
