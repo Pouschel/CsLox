@@ -38,6 +38,8 @@ internal struct Token
 
 	public ObjString StringStringValue => new ObjString(source[(start + 1)..(end - 1)]);
 
+
+
 }
 
 internal class Scanner

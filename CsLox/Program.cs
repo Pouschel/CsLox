@@ -50,4 +50,7 @@ class Globals
 
 	public static void printf(string fmt, params object[] args) =>
 		Console.Write(string.Format(CultureInfo.InvariantCulture, fmt, args));
+
+	public static bool identifiersEqual(in Token a, in Token b) 
+		=> a.StringValue == b.StringValue;
 }

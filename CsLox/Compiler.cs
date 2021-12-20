@@ -42,7 +42,7 @@ struct Local
 
 class CompilerState
 {
-	public Local[] locals = new Local[byte.MaxValue+1];
+	public Local[] locals = new Local[byte.MaxValue + 1];
 	public int localCount;
 	public int scopeDepth;
 }
@@ -191,6 +191,8 @@ internal class Compiler
 	byte parseVariable(string errorMessage)
 	{
 		consume(TOKEN_IDENTIFIER, errorMessage);
+		declareVariable();
+		if (current.scopeDepth > 0) return 0;
 		return identifierConstant(parser.previous);
 	}
 
@@ -233,6 +235,12 @@ internal class Compiler
 	void endScope()
 	{
 		current.scopeDepth--;
+		while (current.localCount > 0 
+			&& current.locals[current.localCount - 1].depth > current.scopeDepth)
+		{
+			emitByte(OP_POP);
+			current.localCount--;
+		}
 	}
 
 	void expressionStatement()
@@ -467,7 +475,42 @@ internal class Compiler
 	}
 	void defineVariable(byte global)
 	{
+		if (current.scopeDepth > 0)
+		{
+			return;
+		}
 		emitBytes(OP_DEFINE_GLOBAL, global);
 	}
+	void declareVariable()
+	{
+		if (current.scopeDepth == 0) return;
+		Token name = parser.previous;
+		for (int i = current.localCount - 1; i >= 0; i--)
+		{
+			ref Local local = ref current.locals[i];
+			if (local.depth != -1 && local.depth < current.scopeDepth)
+			{
+				break;
+			}
+			if (identifiersEqual(name, local.name))
+			{
+				error("Already a variable with this name in this scope.");
+			}
+		}
+		addLocal(name);
+	}
+
+	void addLocal(Token name)
+	{
+		if (current.localCount >= current.locals.Length)
+		{
+			error("Too many local variables in function.");
+			return;
+		}
+		ref Local local = ref current.locals[current.localCount++];
+		local.name = name;
+		local.depth = current.scopeDepth;
+	}
+
 }
 
