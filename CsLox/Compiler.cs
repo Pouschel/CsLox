@@ -57,31 +57,31 @@ internal class Compiler
 		SetRule(TOKEN_SEMICOLON, null, null, PREC_NONE);
 		SetRule(TOKEN_SLASH, null, binary, PREC_FACTOR);
 		SetRule(TOKEN_STAR, null, binary, PREC_FACTOR);
-		SetRule(TOKEN_BANG, null, null, PREC_NONE);
-		SetRule(TOKEN_BANG_EQUAL, null, null, PREC_NONE);
+		SetRule(TOKEN_BANG, unary, null, PREC_NONE);
+		SetRule(TOKEN_BANG_EQUAL, null, binary, PREC_EQUALITY);
 		SetRule(TOKEN_EQUAL, null, null, PREC_NONE);
-		SetRule(TOKEN_EQUAL_EQUAL, null, null, PREC_NONE);
-		SetRule(TOKEN_GREATER, null, null, PREC_NONE);
-		SetRule(TOKEN_GREATER_EQUAL, null, null, PREC_NONE);
-		SetRule(TOKEN_LESS, null, null, PREC_NONE);
-		SetRule(TOKEN_LESS_EQUAL, null, null, PREC_NONE);
+		SetRule(TOKEN_EQUAL_EQUAL, null, binary, PREC_EQUALITY);
+		SetRule(TOKEN_GREATER, null, binary, PREC_COMPARISON);
+		SetRule(TOKEN_GREATER_EQUAL, null, binary, PREC_COMPARISON);
+		SetRule(TOKEN_LESS, null, binary, PREC_COMPARISON);
+		SetRule(TOKEN_LESS_EQUAL, null, binary, PREC_COMPARISON);
 		SetRule(TOKEN_IDENTIFIER, null, null, PREC_NONE);
 		SetRule(TOKEN_STRING, null, null, PREC_NONE);
 		SetRule(TOKEN_NUMBER, number, null, PREC_NONE);
 		SetRule(TOKEN_AND, null, null, PREC_NONE);
 		SetRule(TOKEN_CLASS, null, null, PREC_NONE);
 		SetRule(TOKEN_ELSE, null, null, PREC_NONE);
-		SetRule(TOKEN_FALSE, null, null, PREC_NONE);
+		SetRule(TOKEN_FALSE, literal, null, PREC_NONE);
 		SetRule(TOKEN_FOR, null, null, PREC_NONE);
 		SetRule(TOKEN_FUN, null, null, PREC_NONE);
 		SetRule(TOKEN_IF, null, null, PREC_NONE);
-		SetRule(TOKEN_NIL, null, null, PREC_NONE);
+		SetRule(TOKEN_NIL, literal, null, PREC_NONE);
 		SetRule(TOKEN_OR, null, null, PREC_NONE);
 		SetRule(TOKEN_PRINT, null, null, PREC_NONE);
 		SetRule(TOKEN_RETURN, null, null, PREC_NONE);
 		SetRule(TOKEN_SUPER, null, null, PREC_NONE);
 		SetRule(TOKEN_THIS, null, null, PREC_NONE);
-		SetRule(TOKEN_TRUE, null, null, PREC_NONE);
+		SetRule(TOKEN_TRUE, literal, null, PREC_NONE);
 		SetRule(TOKEN_VAR, null, null, PREC_NONE);
 		SetRule(TOKEN_WHILE, null, null, PREC_NONE);
 		SetRule(TOKEN_ERROR, null, null, PREC_NONE);
@@ -160,6 +160,17 @@ internal class Compiler
 		emitConstant(NUMBER_VAL(value));
 	}
 
+	void literal()
+	{
+		switch (parser.previous.type)
+		{
+			case TOKEN_FALSE: emitByte(OP_FALSE); break;
+			case TOKEN_NIL: emitByte(OP_NIL); break;
+			case TOKEN_TRUE: emitByte(OP_TRUE); break;
+			default: return; // Unreachable.
+		}
+	}
+
 	void grouping()
 	{
 		expression();
@@ -176,6 +187,7 @@ internal class Compiler
 		// Emit the operator instruction.
 		switch (operatorType)
 		{
+			case TOKEN_BANG: emitByte(OP_NOT); break;
 			case TOKEN_MINUS: emitByte(OP_NEGATE); break;
 			default: return; // Unreachable.
 		}
@@ -189,6 +201,12 @@ internal class Compiler
 
 		switch (operatorType)
 		{
+			case TOKEN_BANG_EQUAL: emitBytes(OP_EQUAL, (byte) OP_NOT); break;
+			case TOKEN_EQUAL_EQUAL: emitByte(OP_EQUAL); break;
+			case TOKEN_GREATER: emitByte(OP_GREATER); break;
+			case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, (byte)OP_NOT); break;
+			case TOKEN_LESS: emitByte(OP_LESS); break;
+			case TOKEN_LESS_EQUAL: emitBytes(OP_GREATER, (byte)OP_NOT); break;
 			case TOKEN_PLUS: emitByte(OP_ADD); break;
 			case TOKEN_MINUS: emitByte(OP_SUBTRACT); break;
 			case TOKEN_STAR: emitByte(OP_MULTIPLY); break;

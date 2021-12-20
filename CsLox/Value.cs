@@ -50,7 +50,18 @@ static class ValueStatics
 	public static bool IS_BOOL( Value value) => value.type == VAL_BOOL;
 	public static bool IS_NIL( Value value) => value.type == VAL_NIL;
 	public static bool IS_NUMBER(Value value) => value.type == VAL_NUMBER;
-
+	public static bool isFalsey(Value value) => IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+	public static bool valuesEqual(Value a, Value b)
+	{
+		if (a.type != b.type) return false;
+		switch (a.type)
+		{
+			case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
+			case VAL_NIL: return true;
+			case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+			default: return false; // Unreachable.
+		}
+	}
 }
 
 class ValueArray : List<Value>

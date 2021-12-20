@@ -7,14 +7,20 @@ namespace CsLox;
 enum OpCode : byte
 {
 	OP_CONSTANT,
+	OP_NIL,
+	OP_TRUE,
+	OP_FALSE,
+	OP_EQUAL,
+	OP_GREATER,
+	OP_LESS,
 	OP_ADD,
 	OP_SUBTRACT,
 	OP_MULTIPLY,
-	OP_DIVIDE, 
+	OP_DIVIDE,
+	OP_NOT,
 	OP_NEGATE,
 	OP_RETURN,
 }
-
 
 class Chunk
 {
@@ -73,7 +79,6 @@ class Chunk
 			offset = disassembleInstruction(offset, tw);
 		}
 	}
-
 	internal int disassembleInstruction(int offset, TextWriter tw)
 	{
 		tw.Write($"{offset:0000} ");
@@ -91,6 +96,13 @@ class Chunk
 			case OP_SUBTRACT:
 			case OP_MULTIPLY:
 			case OP_DIVIDE:
+			case OP_NIL:
+			case OP_TRUE:
+			case OP_FALSE:
+			case OP_NOT:
+			case OP_EQUAL:
+			case OP_GREATER:
+			case OP_LESS:
 				tw.WriteLine(instruction);
 				return offset + 1;
 			case OP_CONSTANT:

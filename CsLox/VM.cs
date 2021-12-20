@@ -46,6 +46,7 @@ public class VM
 	{
 		this.ip = 0;
 		stack = new();
+		InterpretResult result = InterpretResult.INTERPRET_OK;
 		while (true)
 		{
 #if DEBUG_TRACE_EXECUTION
@@ -60,10 +61,13 @@ public class VM
 			var instruction = (OpCode)ReadByte();
 			switch (instruction)
 			{
-				case OP_ADD: PopAndOp((a, b) => a + b); break;
-				case OP_SUBTRACT: PopAndOp((a, b) => a - b); break;
-				case OP_MULTIPLY: PopAndOp((a, b) => a * b); break;
-				case OP_DIVIDE: PopAndOp((a, b) => a / b); break;
+				case OP_ADD: result = PopAndOp((a, b) => NUMBER_VAL(a + b)); break;
+				case OP_SUBTRACT: result = PopAndOp((a, b) => NUMBER_VAL(a - b)); break;
+				case OP_MULTIPLY: result = PopAndOp((a, b) => NUMBER_VAL(a * b)); break;
+				case OP_DIVIDE: result = PopAndOp((a, b) => NUMBER_VAL(a / b)); break;
+				case OP_NOT:
+					push(BOOL_VAL(isFalsey(pop())));
+					break;
 				case OP_NEGATE:
 					if (!IS_NUMBER(peek(0)))
 					{
@@ -77,25 +81,36 @@ public class VM
 					Value constant = ReadConstant();
 					push(constant);
 					break;
+				case OP_NIL: push(NIL_VAL); break;
+				case OP_TRUE: push(BOOL_VAL(true)); break;
+				case OP_FALSE: push(BOOL_VAL(false)); break;
+				case OP_EQUAL:
+					Value b = pop();
+					Value a = pop();
+					push(BOOL_VAL(valuesEqual(a, b)));
+					break;
+				case OP_GREATER: result = PopAndOp((a, b) => BOOL_VAL(a > b)); break;
+				case OP_LESS: result = PopAndOp((a, b) => BOOL_VAL(a < b)); break;
 			}
+			if (result != InterpretResult.INTERPRET_OK) return result;
 		}
 
-		InterpretResult PopAndOp(Func<double, double, double> func)
+		InterpretResult PopAndOp(Func<double, double, Value> func)
 		{
 			if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1)))
-			{ 
-        runtimeError("Operands must be numbers."); 
-        return INTERPRET_RUNTIME_ERROR; 
-      } 
-      double b = AS_NUMBER(pop()); 
-      double a = AS_NUMBER(pop()); 
-			push(NUMBER_VAL(func(a, b)));
+			{
+				runtimeError("Operands must be numbers.");
+				return INTERPRET_RUNTIME_ERROR;
+			}
+			double b = AS_NUMBER(pop());
+			double a = AS_NUMBER(pop());
+			push(func(a, b));
 			return InterpretResult.INTERPRET_OK;
 		}
 
 		void runtimeError(string msg)
 		{
-			int instruction = ip  - 1;
+			int instruction = ip - 1;
 			int line = chunk.lines[instruction];
 			var text = $"{chunk.FileName}({line}): {msg}";
 			Console.WriteLine(text);
