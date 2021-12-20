@@ -21,7 +21,7 @@ class Program
 	static void runFile(string path)
 	{
 		string source = File.ReadAllText(path);
-		DumpTokens(source);
+		//DumpTokens(source);
 		InterpretResult result = interpret(source, path);
 		if (result == INTERPRET_COMPILE_ERROR) Environment.Exit(65);
 		if (result == INTERPRET_RUNTIME_ERROR) Environment.Exit(70);
@@ -29,7 +29,10 @@ class Program
 
 	static InterpretResult interpret(string source, string fileName)
 	{
-		var compiler = new Compiler(source, fileName);
+		var compiler = new Compiler(source, fileName)
+		{
+			DEBUG_PRINT_CODE = true
+		};
 		if (!compiler.compile())
 			return INTERPRET_COMPILE_ERROR;
 		VM vm = new VM(compiler.CompiledChunk);

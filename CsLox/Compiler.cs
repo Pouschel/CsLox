@@ -41,8 +41,8 @@ internal class Compiler
 	public Chunk CompiledChunk => rootChunk;
 	Parser parser;
 	string fileName;
-
 	ParseRule[] rules;
+	public bool DEBUG_PRINT_CODE { get; set; }
 
 	void InitTable()
 	{
@@ -108,8 +108,6 @@ internal class Compiler
 		compilingChunk = rootChunk = new Chunk();
 		parser = new Parser();
 	}
-
-
 	public bool compile()
 	{
 		scanner.Reset();
@@ -119,7 +117,6 @@ internal class Compiler
 		endCompiler();
 		return !parser.hadError;
 	}
-
 	void expression()
 	{
 		parsePrecedence(PREC_ASSIGNMENT);
@@ -246,7 +243,18 @@ internal class Compiler
 
 	Chunk currentChunk() => compilingChunk;
 
-	void endCompiler() => emitReturn();
+	void endCompiler()
+	{
+		emitReturn();
+		if (DEBUG_PRINT_CODE)
+		{
+			if (!parser.hadError)
+			{
+				currentChunk().disassemble("code");
+			}
+		}
+	}
+
 	void emitReturn() => emitByte(OP_RETURN);
 
 	void emitByte(byte by) => currentChunk().write(by, parser.previous.line);
