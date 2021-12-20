@@ -1,7 +1,6 @@
 ﻿//#define DEBUG_TRACE_EXECUTION
 global using static CsLox.InterpretResult;
 using System.Diagnostics;
-using System.Globalization;
 
 namespace CsLox;
 
@@ -12,31 +11,33 @@ public enum InterpretResult
 	INTERPRET_RUNTIME_ERROR
 }
 
+class CallFrame
+{
+	public ObjFunction function;
+	public int ip;
+	public int slotIndex;
+};
+
 
 public class VM
 {
-	Chunk chunk;
+
+	//Chunk chunk;
 	List<Value> stack;
-	int ip;
+	List<CallFrame> frames;
+	int frameCount;
 	Table globals;
 	TextWriter tw;
 
-	internal VM(Chunk chunk, TextWriter tw)
+
+
+	internal VM(TextWriter tw)
 	{
-		this.chunk = chunk;
 		stack = new();
 		globals = new();
+		frames = new();
 		this.tw = tw;
 	}
-
-	private byte READ_BYTE() => chunk.code[ip++];
-	private ushort READ_SHORT()
-	{
-		ip += 2;
-		return (ushort)((chunk.code[ip - 2] << 8) | chunk.code[ip - 1]);
-	}
-	private Value READ_CONSTANT() => chunk.constants[READ_BYTE()];
-	private ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
 
 	private void push(Value val) => stack.Add(val);
 
@@ -51,10 +52,42 @@ public class VM
 		return stack[stack.Count - 1 - distance];
 	}
 
-	public InterpretResult interpret()
+	CallFrame CreateFrame(ObjFunction function)
 	{
-		this.ip = 0;
-		stack = new();
+		CallFrame? frame = null;
+		if (frameCount < frames.Count)
+			frame = frames[frameCount];
+		if (frame == null)
+			frame = new CallFrame();
+		if (frameCount++ >= frames.Count)
+			frames.Add(frame);
+		frame.function = function;
+		frame.ip = 0;
+		frame.slotIndex = stack.Count;
+		return frame;
+	}
+	internal InterpretResult interpret(ObjFunction function)
+	{
+		CreateFrame(function);
+		push(OBJ_VAL(function));
+		return run();
+	}
+
+	public InterpretResult run()
+	{
+
+		CallFrame frame = frames[frameCount - 1];
+		var chunk = frame.function.chunk;
+
+		byte READ_BYTE() => chunk.code[frame.ip++];
+		ushort READ_SHORT()
+		{
+			frame.ip += 2;
+			return (ushort)((chunk.code[frame.ip - 2] << 8) | chunk.code[frame.ip - 1]);
+		}
+		Value READ_CONSTANT() => chunk.constants[READ_BYTE()];
+		ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
+
 		InterpretResult result = INTERPRET_OK;
 		while (true)
 		{
@@ -65,7 +98,7 @@ public class VM
 				Console.Write($"[{slot}]");
 			}
 			Console.WriteLine();
-			chunk.disassembleInstruction(ip, Console.Out);
+			frame.function.chunk.disassembleInstruction(frame.ip, Console.Out);
 #endif
 			var instruction = (OpCode)READ_BYTE();
 			switch (instruction)
@@ -84,19 +117,19 @@ public class VM
 				case OP_JUMP:
 					{
 						ushort offset = READ_SHORT();
-						ip += offset;
+						frame.ip += offset;
 						break;
 					}
 				case OP_JUMP_IF_FALSE:
 					{
 						ushort offset = READ_SHORT();
-						if (isFalsey(peek(0))) ip += offset;
+						if (isFalsey(peek(0))) frame.ip += offset;
 						break;
 					}
 				case OP_LOOP:
 					{
 						ushort offset = READ_SHORT();
-						ip -= offset;
+						frame.ip -= offset;
 						break;
 					}
 				case OP_RETURN: return INTERPRET_OK;
@@ -114,13 +147,13 @@ public class VM
 				case OP_GET_LOCAL:
 					{
 						byte slot = READ_BYTE();
-						push(stack[slot]);
+						push(stack[frame.slotIndex + slot]);
 						break;
 					}
 				case OP_SET_LOCAL:
 					{
 						byte slot = READ_BYTE();
-						stack[slot] = peek(0);
+						stack[frame.slotIndex + slot] = peek(0);
 						break;
 					}
 				case OP_GET_GLOBAL:
@@ -189,6 +222,7 @@ public class VM
 		}
 
 	}
+
 	void concatenate()
 	{
 		ObjString b = AS_STRING(pop());
@@ -212,7 +246,9 @@ public class VM
 
 	void runtimeError(string msg)
 	{
-		int instruction = ip - 1;
+		CallFrame frame = frames[frameCount - 1];
+		var chunk = frame.function.chunk;
+		int instruction = frame.ip - 1;
 		int line = chunk.lines[instruction];
 		var text = string.IsNullOrEmpty(chunk.FileName) ? msg : $"{chunk.FileName}({line}): {msg}";
 		tw.WriteLine(text);

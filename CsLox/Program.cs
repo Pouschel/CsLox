@@ -50,8 +50,8 @@ public class Globals
 		var function = compiler.compile();
 		if (function==null)
 			return INTERPRET_COMPILE_ERROR;
-		VM vm = new VM(function.chunk, tw);
-		return vm.interpret();
+		VM vm = new VM(tw);
+		return vm.interpret(function);
 	}
 
 	public static bool RunFile(string path, TextWriter tw, bool debugPrintCode = false)
