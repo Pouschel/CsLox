@@ -34,6 +34,19 @@ class ParseRule
 	public Precedence precedence;
 }
 
+struct Local
+{
+	public Token name;
+	public int depth;
+}
+
+class CompilerState
+{
+	public Local[] locals = new Local[byte.MaxValue+1];
+	public int localCount;
+	public int scopeDepth;
+}
+
 
 internal class Compiler
 {
@@ -42,6 +55,7 @@ internal class Compiler
 	Chunk compilingChunk;
 	public Chunk CompiledChunk => rootChunk;
 	Parser parser;
+	CompilerState current;
 	string fileName;
 	ParseRule[] rules;
 	public bool DEBUG_PRINT_CODE { get; set; }
@@ -110,6 +124,7 @@ internal class Compiler
 		compilingChunk = rootChunk = new Chunk();
 		compilingChunk.FileName = fileName;
 		parser = new Parser();
+		current = new CompilerState();
 	}
 	public bool compile()
 	{
