@@ -2,7 +2,7 @@
   "profiles": {
     "CsLoxTester": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Code\\CsLox\\Tests"
+      "commandLineArgs": "C:\\Code\\CsLox\\Tests C:\\Code\\CsLox\\Examples\\Ex1.lox"
     }
   }
 }

@@ -67,7 +67,7 @@ class Chunk
 			tw.Write("{0,4} ", lines[offset]);
 
 		var instruction = (OpCode)code[offset];
-		var instructionString = instruction.ToString()[3..];
+		var instructionString = $"{instruction.ToString()[3..],-16}";
 		switch (instruction)
 		{
 			case OP_RETURN:
@@ -103,6 +103,7 @@ class Chunk
 			case OP_JUMP:
 			case OP_JUMP_IF_FALSE:
 				return jumpInstruction(1);
+			case OP_LOOP:return jumpInstruction(-1);
 			default:
 				tw.WriteLine($"Unknown opcode {instruction}");
 				return offset + 1;

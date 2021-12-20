@@ -93,6 +93,12 @@ public class VM
 						if (isFalsey(peek(0))) ip += offset;
 						break;
 					}
+				case OP_LOOP:
+					{
+						ushort offset = READ_SHORT();
+						ip -= offset;
+						break;
+					}
 				case OP_RETURN: return INTERPRET_OK;
 				case OP_PRINT:
 					tw.WriteLine(pop());

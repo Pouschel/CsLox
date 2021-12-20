@@ -53,10 +53,10 @@ public class Globals
 		return vm.interpret();
 	}
 
-	public static bool RunFile(string path, TextWriter tw)
+	public static bool RunFile(string path, TextWriter tw, bool debugPrintCode = false)
 	{
 		string source = File.ReadAllText(path);
-		InterpretResult result = interpret(source, path, tw);
+		InterpretResult result = interpret(source, path, tw, debugPrintCode);
 		return result != INTERPRET_OK;
 	}
 

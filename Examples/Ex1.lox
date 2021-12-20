@@ -1,9 +1,7 @@
-var b=false;
-var a=true;
+var x=5;
+while (x>0)
+{
+  print x;
+  x=x-1;
+}
 
-if (a and b) 
-	print "Hello";
-else 
-	print "Bye";
-
-print "End";

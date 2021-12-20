@@ -12,7 +12,7 @@ class Program
 		try
 		{
 			var baseName = Path.GetFileName(fileName);
-			if (baseName[0]=='-')
+			if (baseName[0] == '-')
 			{
 				Interlocked.Increment(ref nSkipped);
 				return;
@@ -76,7 +76,7 @@ class Program
 			if (idx < 0) continue;
 			idx = line.IndexOf(": ", idx);
 			if (idx < 0) continue;
-			sw.WriteLine(line.Substring(idx+2).TrimEnd());
+			sw.WriteLine(line.Substring(idx + 2).TrimEnd());
 		}
 		return sw.ToString();
 	}
@@ -129,6 +129,11 @@ class Program
 	{
 		Console.WriteLine("CsLox Tester v1");
 		if (args.Length < 1) return;
+		if (args.Length >= 2)
+		{
+			Console.WriteLine($"Running file: {args[1]}");
+			Globals.RunFile(args[1], Console.Out, true);
+		}
 		var prog = new Program();
 		prog.RunTests(args[0]);
 		if (Debugger.IsAttached) Console.ReadLine();
