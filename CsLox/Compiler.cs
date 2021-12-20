@@ -66,7 +66,7 @@ internal class Compiler
 		SetRule(TOKEN_LESS, null, binary, PREC_COMPARISON);
 		SetRule(TOKEN_LESS_EQUAL, null, binary, PREC_COMPARISON);
 		SetRule(TOKEN_IDENTIFIER, null, null, PREC_NONE);
-		SetRule(TOKEN_STRING, null, null, PREC_NONE);
+		SetRule(TOKEN_STRING, _string, null, PREC_NONE);
 		SetRule(TOKEN_NUMBER, number, null, PREC_NONE);
 		SetRule(TOKEN_AND, null, null, PREC_NONE);
 		SetRule(TOKEN_CLASS, null, null, PREC_NONE);
@@ -170,7 +170,10 @@ internal class Compiler
 			default: return; // Unreachable.
 		}
 	}
-
+	void _string()
+	{
+		emitConstant(OBJ_VAL(parser.previous.StringStringValue));
+	}
 	void grouping()
 	{
 		expression();
@@ -201,7 +204,7 @@ internal class Compiler
 
 		switch (operatorType)
 		{
-			case TOKEN_BANG_EQUAL: emitBytes(OP_EQUAL, (byte) OP_NOT); break;
+			case TOKEN_BANG_EQUAL: emitBytes(OP_EQUAL, (byte)OP_NOT); break;
 			case TOKEN_EQUAL_EQUAL: emitByte(OP_EQUAL); break;
 			case TOKEN_GREATER: emitByte(OP_GREATER); break;
 			case TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, (byte)OP_NOT); break;

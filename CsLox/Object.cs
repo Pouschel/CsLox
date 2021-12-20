@@ -16,7 +16,13 @@ internal class Obj
 
 internal class ObjString : Obj
 {
-	public string chars = "";
+	public readonly string chars;
+
+	public ObjString(string v)
+	{
+		type = ObjType.OBJ_STRING;
+		chars = v;
+	}
 
 }
 
