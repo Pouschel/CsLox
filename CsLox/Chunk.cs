@@ -1,8 +1,5 @@
-﻿
-using System.Globalization;
-
+﻿using System.Globalization;
 namespace CsLox;
-
 
 enum OpCode : byte
 {
@@ -18,7 +15,8 @@ enum OpCode : byte
 	OP_MULTIPLY,
 	OP_DIVIDE,
 	OP_NOT,
-	OP_NEGATE,
+	OP_NEGATE, 
+	OP_PRINT,
 	OP_RETURN,
 }
 
@@ -103,6 +101,7 @@ class Chunk
 			case OP_EQUAL:
 			case OP_GREATER:
 			case OP_LESS:
+			case OP_PRINT:
 				tw.WriteLine(instruction);
 				return offset + 1;
 			case OP_CONSTANT:

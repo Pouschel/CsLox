@@ -1,4 +1,4 @@
-﻿#define DEBUG_TRACE_EXECUTION
+﻿//#define DEBUG_TRACE_EXECUTION
 global using static CsLox.InterpretResult;
 using System.Diagnostics;
 
@@ -46,7 +46,7 @@ public class VM
 	{
 		this.ip = 0;
 		stack = new();
-		InterpretResult result = InterpretResult.INTERPRET_OK;
+		InterpretResult result = INTERPRET_OK;
 		while (true)
 		{
 #if DEBUG_TRACE_EXECUTION
@@ -72,7 +72,10 @@ public class VM
 					}
 					push(NUMBER_VAL(-AS_NUMBER(pop())));
 					break;
-				case OP_RETURN: return InterpretResult.INTERPRET_OK;
+				case OP_RETURN: return INTERPRET_OK;
+				case OP_PRINT:
+						Console.WriteLine(pop());
+						break;
 				case OP_CONSTANT:
 					Value constant = ReadConstant();
 					push(constant);
@@ -112,7 +115,7 @@ public class VM
 				case OP_MULTIPLY: result = PopAndOp((a, b) => NUMBER_VAL(a * b)); break;
 				case OP_DIVIDE: result = PopAndOp((a, b) => NUMBER_VAL(a / b)); break;
 			}
-			if (result != InterpretResult.INTERPRET_OK) return result;
+			if (result != INTERPRET_OK) return result;
 		}
 
 		void concatenate()
@@ -133,7 +136,7 @@ public class VM
 			double b = AS_NUMBER(pop());
 			double a = AS_NUMBER(pop());
 			push(func(a, b));
-			return InterpretResult.INTERPRET_OK;
+			return INTERPRET_OK;
 		}
 
 		void runtimeError(string msg)

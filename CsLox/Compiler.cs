@@ -113,14 +113,43 @@ internal class Compiler
 	{
 		scanner.Reset();
 		advance();
-		expression();
-		consume(TOKEN_EOF, "Expect end of expression.");
+		while (!match(TOKEN_EOF))
+		{
+			declaration();
+		}
 		endCompiler();
 		return !parser.hadError;
+	}
+	void declaration()
+	{
+		statement();
+	}
+	void statement()
+	{
+		if (match(TOKEN_PRINT))
+		{
+			printStatement();
+		}
+	}
+	bool match(TokenType type)
+	{
+		if (!check(type)) return false;
+		advance();
+		return true;
+	}
+	bool check(TokenType type)
+	{
+		return parser.current.type == type;
 	}
 	void expression()
 	{
 		parsePrecedence(PREC_ASSIGNMENT);
+	}
+	void printStatement()
+	{
+		expression();
+		consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+		emitByte(OP_PRINT);
 	}
 	void parsePrecedence(Precedence precedence)
 	{
