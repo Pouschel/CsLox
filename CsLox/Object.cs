@@ -15,15 +15,27 @@ internal class Obj
 
 }
 
-internal class ObjString : Obj
+internal class ObjString : Obj, IEquatable<ObjString>
 {
 	public readonly string chars;
+	public readonly int hash;
 
 	public ObjString(string v)
 	{
-		type = ObjType.OBJ_STRING;
+		type = OBJ_STRING;
 		chars = v;
+		hash = v.GetHashCode();
 	}
+
+	public bool Equals(ObjString? other)
+	{
+		if (other is null) return false;
+		if (hash != other.hash) return false;
+		return chars == other.chars;
+	}
+
+	public override int GetHashCode() => hash;
+	public override bool Equals(object? obj) => Equals(obj as ObjString);
 
 	public override string ToString() => chars;
 }

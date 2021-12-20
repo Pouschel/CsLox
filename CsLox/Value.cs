@@ -73,9 +73,7 @@ static class ValueStatics
 			case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
 			case VAL_OBJ:
 				{
-					ObjString aString = AS_STRING(a);
-					ObjString bString = AS_STRING(b);
-					return aString.chars == bString.chars;
+					return AS_OBJ(a).Equals(AS_OBJ(b));
 				}
 			default: return false; // Unreachable.
 		}
