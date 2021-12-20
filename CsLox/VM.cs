@@ -16,18 +16,20 @@ public class VM
 {
 	Chunk chunk;
 	List<Value> stack;
-
 	int ip;
+	Table globals;
 
 	internal VM(Chunk chunk)
 	{
 		this.chunk = chunk;
 		stack = new();
+		globals = new();
 	}
 
 	private byte ReadByte() => chunk.code[ip++];
 
-	private Value ReadConstant() => chunk.constants[ReadByte()];
+	private Value READ_CONSTANT() => chunk.constants[ReadByte()];
+	private ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
 
 	private void push(Value val) => stack.Add(val);
 
@@ -77,13 +79,20 @@ public class VM
 						Console.WriteLine(pop());
 						break;
 				case OP_CONSTANT:
-					Value constant = ReadConstant();
+					Value constant = READ_CONSTANT();
 					push(constant);
 					break;
 				case OP_NIL: push(NIL_VAL); break;
 				case OP_TRUE: push(BOOL_VAL(true)); break;
 				case OP_FALSE: push(BOOL_VAL(false)); break;
 				case OP_POP: pop(); break;
+				case OP_DEFINE_GLOBAL:
+					{
+						ObjString name = READ_STRING();
+						tableSet(globals, name, peek(0));
+						pop();
+						break;
+					}
 				case OP_EQUAL:
 					{
 						Value b = pop();

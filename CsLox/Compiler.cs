@@ -122,7 +122,14 @@ internal class Compiler
 	}
 	void declaration()
 	{
-		statement();
+		if (match(TOKEN_VAR))
+		{
+			varDeclaration();
+		}
+		else
+		{
+			statement();
+		}
 		if (parser.panicMode) synchronize();
 	}
 	void synchronize()
@@ -148,6 +155,33 @@ internal class Compiler
 			advance();
 		}
 	}
+	void varDeclaration()
+	{
+		byte global = parseVariable("Expect variable name.");
+
+		if (match(TOKEN_EQUAL))
+		{
+			expression();
+		}
+		else
+		{
+			emitByte(OP_NIL);
+		}
+		consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
+		defineVariable(global);
+	}
+	byte parseVariable(string errorMessage)
+	{
+		consume(TOKEN_IDENTIFIER, errorMessage);
+		return identifierConstant(parser.previous);
+	}
+
+	byte identifierConstant(Token name)
+	{
+		return makeConstant(OBJ_VAL(new ObjString(name.StringValue)));
+	}
+
 	void statement()
 	{
 		if (match(TOKEN_PRINT))
@@ -366,6 +400,10 @@ internal class Compiler
 			return 0;
 		}
 		return (byte)constant;
+	}
+	void defineVariable(byte global)
+	{
+		emitBytes(OP_DEFINE_GLOBAL, global);
 	}
 }
 
