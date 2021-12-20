@@ -211,6 +211,10 @@ internal class Compiler
 			printStatement();
 
 		}
+		else if (match(TOKEN_FOR))
+		{
+			forStatement();
+		}
 		else if (match(TOKEN_IF))
 		{
 			ifStatement();
@@ -230,6 +234,52 @@ internal class Compiler
 			expressionStatement();
 		}
 	}
+
+	void forStatement()
+	{
+		beginScope();
+		consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+		if (match(TOKEN_SEMICOLON))
+		{
+			// No initializer.
+		}
+		else if (match(TOKEN_VAR)) varDeclaration();
+		else expressionStatement();
+
+		int loopStart = currentChunk().count;
+		int exitJump = -1;
+		if (!match(TOKEN_SEMICOLON))
+		{
+			expression();
+			consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+			// Jump out of the loop if the condition is false.
+			exitJump = emitJump(OP_JUMP_IF_FALSE);
+			emitByte(OP_POP); // Condition.
+		}
+		if (!match(TOKEN_RIGHT_PAREN))
+		{
+			int bodyJump = emitJump(OP_JUMP);
+			int incrementStart = currentChunk().count;
+			expression();
+			emitByte(OP_POP);
+			consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+			emitLoop(loopStart);
+			loopStart = incrementStart;
+			patchJump(bodyJump);
+		}
+
+		statement();
+		emitLoop(loopStart);
+		if (exitJump != -1)
+		{
+			patchJump(exitJump);
+			emitByte(OP_POP); // Condition.
+		}
+		endScope();
+	}
+
 	void whileStatement()
 	{
 		int loopStart = currentChunk().count;
@@ -570,8 +620,8 @@ internal class Compiler
 		emitByte(OP_LOOP);
 		int offset = currentChunk().count - loopStart + 2;
 		if (offset > ushort.MaxValue) error("Loop body too large.");
-		emitByte((byte) ( (offset >> 8) & 0xff));
-		emitByte((byte) (offset & 0xff));
+		emitByte((byte)((offset >> 8) & 0xff));
+		emitByte((byte)(offset & 0xff));
 	}
 
 	byte makeConstant(Value value)

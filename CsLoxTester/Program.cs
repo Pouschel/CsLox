@@ -129,13 +129,13 @@ class Program
 	{
 		Console.WriteLine("CsLox Tester v1");
 		if (args.Length < 1) return;
-		if (args.Length >= 2)
+		var prog = new Program();
+		prog.RunTests(args[0]);
+		if (args.Length >= 2 && prog.nFail==0)
 		{
 			Console.WriteLine($"Running file: {args[1]}");
 			Globals.RunFile(args[1], Console.Out, true);
 		}
-		var prog = new Program();
-		prog.RunTests(args[0]);
 		if (Debugger.IsAttached) Console.ReadLine();
 	}
 }
