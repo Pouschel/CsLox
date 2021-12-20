@@ -105,6 +105,17 @@ public class VM
 						pop();
 						break;
 					}
+				case OP_SET_GLOBAL:
+					{
+						ObjString name = READ_STRING();
+						if (tableSet(globals, name, peek(0)))
+						{
+							tableDelete(globals, name);
+							runtimeError($"Undefined variable '{name.chars}'.");
+							return INTERPRET_RUNTIME_ERROR;
+						}
+						break;
+					}
 				case OP_EQUAL:
 					{
 						Value b = pop();

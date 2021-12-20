@@ -25,10 +25,12 @@ struct Parser
 	public bool panicMode;
 }
 
+delegate void PaserAction(bool canAssign);
+
 class ParseRule
 {
-	public Action? prefix;
-	public Action? infix;
+	public PaserAction? prefix;
+	public PaserAction? infix;
 	public Precedence precedence;
 }
 
@@ -87,7 +89,7 @@ internal class Compiler
 		SetRule(TOKEN_ERROR, null, null, PREC_NONE);
 		SetRule(TOKEN_EOF, null, null, PREC_NONE);
 
-		void SetRule(TokenType tt, Action? prefix, Action? infix, Precedence prec = PREC_NONE)
+		void SetRule(TokenType tt, PaserAction? prefix, PaserAction? infix, Precedence prec = PREC_NONE)
 		{
 			var rule = new ParseRule
 			{
@@ -229,12 +231,17 @@ internal class Compiler
 			error("Expect expression.");
 			return;
 		}
-		prefixRule();
+		bool canAssign = precedence <= PREC_ASSIGNMENT;
+		prefixRule(canAssign);
 		while (precedence <= getRule(parser.current.type).precedence)
 		{
 			advance();
 			var infixRule = getRule(parser.previous.type).infix;
-			infixRule!();
+			infixRule!(canAssign);
+		}
+		if (canAssign && match(TOKEN_EQUAL))
+		{
+			error("Invalid assignment target.");
 		}
 	}
 
@@ -252,13 +259,13 @@ internal class Compiler
 		}
 	}
 
-	void number()
+	void number(bool canAssign)
 	{
 		double value = double.Parse(parser.previous.StringValue);
 		emitConstant(NUMBER_VAL(value));
 	}
 
-	void literal()
+	void literal(bool canAssign)
 	{
 		switch (parser.previous.type)
 		{
@@ -268,17 +275,17 @@ internal class Compiler
 			default: return; // Unreachable.
 		}
 	}
-	void _string()
+	void _string(bool canAssign)
 	{
 		emitConstant(OBJ_VAL(parser.previous.StringStringValue));
 	}
-	void grouping()
+	void grouping(bool canAssign)
 	{
 		expression();
 		consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 	}
 
-	void unary()
+	void unary(bool canAssign)
 	{
 		TokenType operatorType = parser.previous.type;
 
@@ -293,7 +300,7 @@ internal class Compiler
 			default: return; // Unreachable.
 		}
 	}
-	void binary()
+	void binary(bool canAssign)
 	{
 		TokenType operatorType = parser.previous.type;
 		ParseRule rule = getRule(operatorType);
@@ -314,14 +321,23 @@ internal class Compiler
 			default: return; // Unreachable.
 		}
 	}
-	void variable()
+	void variable(bool canAssign)
 	{
-		namedVariable(parser.previous);
+		namedVariable(parser.previous, canAssign);
 	}
-	void namedVariable(Token name)
+	void namedVariable(Token name, bool canAssign)
 	{
 		byte arg = identifierConstant(name);
-		emitBytes(OP_GET_GLOBAL, arg);
+		if (canAssign && match(TOKEN_EQUAL))
+		{
+			expression();
+			emitBytes(OP_SET_GLOBAL, arg);
+		}
+		else
+		{
+			emitBytes(OP_GET_GLOBAL, arg);
+		}
+
 	}
 
 	void consume(TokenType type, string message)
