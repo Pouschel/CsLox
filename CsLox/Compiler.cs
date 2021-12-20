@@ -65,7 +65,7 @@ internal class Compiler
 		SetRule(TOKEN_GREATER_EQUAL, null, binary, PREC_COMPARISON);
 		SetRule(TOKEN_LESS, null, binary, PREC_COMPARISON);
 		SetRule(TOKEN_LESS_EQUAL, null, binary, PREC_COMPARISON);
-		SetRule(TOKEN_IDENTIFIER, null, null, PREC_NONE);
+		SetRule(TOKEN_IDENTIFIER, variable, null, PREC_NONE);
 		SetRule(TOKEN_STRING, _string, null, PREC_NONE);
 		SetRule(TOKEN_NUMBER, number, null, PREC_NONE);
 		SetRule(TOKEN_AND, null, null, PREC_NONE);
@@ -293,7 +293,6 @@ internal class Compiler
 			default: return; // Unreachable.
 		}
 	}
-
 	void binary()
 	{
 		TokenType operatorType = parser.previous.type;
@@ -314,6 +313,15 @@ internal class Compiler
 			case TOKEN_SLASH: emitByte(OP_DIVIDE); break;
 			default: return; // Unreachable.
 		}
+	}
+	void variable()
+	{
+		namedVariable(parser.previous);
+	}
+	void namedVariable(Token name)
+	{
+		byte arg = identifierConstant(name);
+		emitBytes(OP_GET_GLOBAL, arg);
 	}
 
 	void consume(TokenType type, string message)

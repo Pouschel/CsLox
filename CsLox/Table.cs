@@ -28,7 +28,7 @@ static class TableStatics
 		}
 	}
 
-	public static bool tableGet(Table table, ObjString key, ref Value value) 
+	public static bool tableGet(Table table, ObjString key, out Value value) 
 		=> table.TryGetValue(key, out value);
 
 	public static bool tableDelete(Table table, ObjString key) 
