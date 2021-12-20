@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using static CsLox.Precedence;
+using static CsLox.FunctionType;
 namespace CsLox;
 
 enum Precedence
@@ -17,6 +18,11 @@ enum Precedence
 	PREC_PRIMARY
 }
 
+enum FunctionType
+{
+	TYPE_FUNCTION,
+	TYPE_SCRIPT
+}
 
 struct Parser
 {
@@ -43,11 +49,25 @@ struct Local
 
 class CompilerState
 {
+	public ObjFunction function;
+	public FunctionType type;
 	public Local[] locals = new Local[byte.MaxValue + 1];
 	public int localCount;
 	public int scopeDepth;
-}
 
+	public CompilerState(FunctionType type)
+	{
+		this.type = type;
+		this.function = new ObjFunction();
+		ref Local local = ref locals[localCount++];
+		local.depth = 0;
+		local.name = new Token()
+		{
+			source = ""
+		};
+
+	}
+}
 
 internal class Compiler
 {
@@ -127,9 +147,9 @@ internal class Compiler
 		compilingChunk = rootChunk = new Chunk();
 		compilingChunk.FileName = fileName;
 		parser = new Parser();
-		current = new CompilerState();
+		current = new CompilerState(FunctionType.TYPE_SCRIPT);
 	}
-	public bool compile()
+	public ObjFunction? compile()
 	{
 		scanner.Reset();
 		advance();
@@ -137,8 +157,8 @@ internal class Compiler
 		{
 			declaration();
 		}
-		endCompiler();
-		return !parser.hadError;
+		var function = endCompiler();
+		return parser.hadError ? null : function;
 	}
 	void declaration()
 	{
@@ -585,18 +605,20 @@ internal class Compiler
 		}
 	}
 
-	Chunk currentChunk() => compilingChunk;
+	Chunk currentChunk() => current.function.chunk;
 
-	void endCompiler()
+	ObjFunction endCompiler()
 	{
 		emitReturn();
+		ObjFunction function = current.function;
 		if (DEBUG_PRINT_CODE)
 		{
 			if (!parser.hadError)
 			{
-				currentChunk().disassemble("code");
+				currentChunk().disassemble(function.NameOrScript);
 			}
 		}
+		return function;
 	}
 
 	void emitReturn() => emitByte(OP_RETURN);

@@ -30,7 +30,17 @@ internal class ObjFunction : Obj
 		this.chunk = new Chunk();
 	}
 
-	public override string ToString() => $"<fn {name.chars}>";
+	public override string ToString() => $"<fn {NameOrScript}>";
+
+	public string NameOrScript
+	{
+		get
+		{
+			var s = name.chars;
+			if (string.IsNullOrEmpty(s)) return "<script>";
+			return s;
+		}
+	}
 
 }
 internal class ObjString : Obj, IEquatable<ObjString>

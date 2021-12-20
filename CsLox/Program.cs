@@ -47,9 +47,10 @@ public class Globals
 		{
 			DEBUG_PRINT_CODE = debugPrintCode
 		};
-		if (!compiler.compile())
+		var function = compiler.compile();
+		if (function==null)
 			return INTERPRET_COMPILE_ERROR;
-		VM vm = new VM(compiler.CompiledChunk, tw);
+		VM vm = new VM(function.chunk, tw);
 		return vm.interpret();
 	}
 
