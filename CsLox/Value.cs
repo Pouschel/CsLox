@@ -14,7 +14,7 @@ enum ValueType
 
 struct Value
 {
-	static object DummyObject = new object();
+	static object DummyObject = new ();
 	
 	public ValueType type;
 	public double dValue;
@@ -53,7 +53,7 @@ static class ValueStatics
 	public static Value NUMBER_VAL(double value) => new(ValueType.VAL_NUMBER, value);
 	public static Value OBJ_VAL(object value) => new(ValueType.VAL_OBJ, value);
 
-	public static object AS_OBJ(Value value) => value.oValue; 
+	public static Obj AS_OBJ(Value value) => (Obj) value.oValue; 
 	public static bool AS_BOOL( Value value) => value.dValue != 0;
 	public static double AS_NUMBER( Value value) => value.dValue;
 
