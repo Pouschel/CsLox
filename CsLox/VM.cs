@@ -1,6 +1,7 @@
 ﻿//#define DEBUG_TRACE_EXECUTION
 global using static CsLox.InterpretResult;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace CsLox;
 
@@ -18,12 +19,14 @@ public class VM
 	List<Value> stack;
 	int ip;
 	Table globals;
+	TextWriter tw;
 
-	internal VM(Chunk chunk)
+	internal VM(Chunk chunk, TextWriter tw)
 	{
 		this.chunk = chunk;
 		stack = new();
 		globals = new();
+		this.tw = tw;
 	}
 
 	private byte READ_BYTE() => chunk.code[ip++];
@@ -92,7 +95,7 @@ public class VM
 					}
 				case OP_RETURN: return INTERPRET_OK;
 				case OP_PRINT:
-					Console.WriteLine(pop());
+					tw.WriteLine(pop());
 					break;
 				case OP_CONSTANT:
 					Value constant = READ_CONSTANT();
@@ -179,41 +182,42 @@ public class VM
 			if (result != INTERPRET_OK) return result;
 		}
 
-		void concatenate()
-		{
-			ObjString b = AS_STRING(pop());
-			ObjString a = AS_STRING(pop());
-			var result = new ObjString(a.chars + b.chars);
-			push(OBJ_VAL(result));
-		}
+	}
+	void concatenate()
+	{
+		ObjString b = AS_STRING(pop());
+		ObjString a = AS_STRING(pop());
+		var result = new ObjString(a.chars + b.chars);
+		push(OBJ_VAL(result));
+	}
 
-		InterpretResult PopAndOp(Func<double, double, Value> func)
+	InterpretResult PopAndOp(Func<double, double, Value> func)
+	{
+		if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1)))
 		{
-			if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1)))
-			{
-				runtimeError("Operands must be numbers.");
-				return INTERPRET_RUNTIME_ERROR;
-			}
-			double b = AS_NUMBER(pop());
-			double a = AS_NUMBER(pop());
-			push(func(a, b));
-			return INTERPRET_OK;
+			runtimeError("Operands must be numbers.");
+			return INTERPRET_RUNTIME_ERROR;
 		}
+		double b = AS_NUMBER(pop());
+		double a = AS_NUMBER(pop());
+		push(func(a, b));
+		return INTERPRET_OK;
+	}
 
-		void runtimeError(string msg)
-		{
-			int instruction = ip - 1;
-			int line = chunk.lines[instruction];
-			var text = $"{chunk.FileName}({line}): {msg}";
-			Console.WriteLine(text);
-			Trace.WriteLine(text);
-			resetStack();
-		}
+	void runtimeError(string msg)
+	{
+		int instruction = ip - 1;
+		int line = chunk.lines[instruction];
+		var text = string.IsNullOrEmpty(chunk.FileName) ? msg : $"{chunk.FileName}({line}): {msg}";
+		tw.WriteLine(text);
+		Trace.WriteLine(text);
+		resetStack();
+	}
 
-		void resetStack()
-		{
-			stack.Clear();
-		}
+	void resetStack()
+	{
+		stack.Clear();
 	}
 }
+
 

@@ -1,4 +1,5 @@
-﻿using static CsLox.Precedence;
+﻿using System.Globalization;
+using static CsLox.Precedence;
 namespace CsLox;
 
 enum Precedence
@@ -57,6 +58,7 @@ internal class Compiler
 	Parser parser;
 	CompilerState current;
 	string fileName;
+	TextWriter tw;
 	ParseRule[] rules;
 	public bool DEBUG_PRINT_CODE { get; set; }
 
@@ -115,11 +117,12 @@ internal class Compiler
 		}
 	}
 
-	public Compiler(string source, string fileName = "")
+	public Compiler(string source, string fileName, TextWriter tw)
 	{
 		rules = new ParseRule[(int)TOKEN_EOF + 1];
 		InitTable();
 		this.fileName = fileName;
+		this.tw = tw;
 		scanner = new Scanner(source);
 		compilingChunk = rootChunk = new Chunk();
 		compilingChunk.FileName = fileName;
@@ -271,8 +274,8 @@ internal class Compiler
 		{
 			error("Too much code to jump over.");
 		}
-		currentChunk().code[offset] = (byte)( (jump >> 8) & 0xff);
-		currentChunk().code[offset + 1] =(byte) (jump & 0xff);
+		currentChunk().code[offset] = (byte)((jump >> 8) & 0xff);
+		currentChunk().code[offset + 1] = (byte)(jump & 0xff);
 	}
 	void block()
 	{
@@ -364,7 +367,7 @@ internal class Compiler
 
 	void number(bool canAssign)
 	{
-		double value = double.Parse(parser.previous.StringValue);
+		double value = double.Parse(parser.previous.StringValue, CultureInfo.InvariantCulture);
 		emitConstant(NUMBER_VAL(value));
 	}
 	void literal(bool canAssign)
@@ -486,8 +489,8 @@ internal class Compiler
 	{
 		if (parser.panicMode) return;
 		parser.panicMode = true;
-		var msg = $"{fileName}({token.line}): {message}";
-		Console.WriteLine(msg);
+		var msg = string.IsNullOrEmpty(fileName) ? message : $"{fileName}({token.line}): {message}";
+		tw.WriteLine(msg);
 		System.Diagnostics.Trace.WriteLine(msg);
 		parser.hadError = true;
 	}
@@ -501,14 +504,14 @@ internal class Compiler
 			Token token = scanner.scanToken();
 			if (token.line != line)
 			{
-				printf("{0,4} ", token.line);
+				tw.Write("{0,4} ", token.line);
 				line = token.line;
 			}
 			else
 			{
-				printf("   | ");
+				tw.Write("   | ");
 			}
-			printf("{0,2} '{1}'\n", token.type, token.StringValue);
+			tw.Write("{0,2} '{1}'\n", token.type, token.StringValue);
 
 			if (token.type == TOKEN_EOF || token.type == TOKEN_ERROR) break;
 		}

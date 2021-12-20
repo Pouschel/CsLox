@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CsLoxTester": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Code\\CsLox\\Tests"
+    }
+  }
+}

@@ -22,35 +22,49 @@ class Program
 	{
 		string source = File.ReadAllText(path);
 		//DumpTokens(source);
-		InterpretResult result = interpret(source, path);
+		InterpretResult result = interpret(source, path, Console.Out);
 		if (result == INTERPRET_COMPILE_ERROR) Environment.Exit(65);
 		if (result == INTERPRET_RUNTIME_ERROR) Environment.Exit(70);
 	}
 
-	static InterpretResult interpret(string source, string fileName)
-	{
-		var compiler = new Compiler(source, fileName)
-		{
-			DEBUG_PRINT_CODE = true
-		};
-		if (!compiler.compile())
-			return INTERPRET_COMPILE_ERROR;
-		VM vm = new VM(compiler.CompiledChunk);
-		return vm.interpret();
-	}
 
-	static void DumpTokens(string source)
+	static void DumpTokens(string source, TextWriter tw)
 	{
-		new Compiler(source).DumpTokens();
+		new Compiler(source,"",tw).DumpTokens();
 	}
 }
 
-class Globals
+public class Globals
 {
 
-	public static void printf(string fmt, params object[] args) =>
-		Console.Write(string.Format(CultureInfo.InvariantCulture, fmt, args));
-
-	public static bool identifiersEqual(in Token a, in Token b) 
+	internal static bool identifiersEqual(in Token a, in Token b) 
 		=> a.StringValue == b.StringValue;
+
+	internal static InterpretResult interpret(string source, string fileName, TextWriter tw
+		, bool debugPrintCode = false)
+	{
+		var compiler = new Compiler(source, fileName, tw)
+		{
+			DEBUG_PRINT_CODE = debugPrintCode
+		};
+		if (!compiler.compile())
+			return INTERPRET_COMPILE_ERROR;
+		VM vm = new VM(compiler.CompiledChunk, tw);
+		return vm.interpret();
+	}
+
+	public static bool RunFile(string path, TextWriter tw)
+	{
+		string source = File.ReadAllText(path);
+		InterpretResult result = interpret(source, path, tw);
+		return result != INTERPRET_OK;
+	}
+
+	public static bool RunCode(string source, TextWriter tw)
+	{
+		InterpretResult result = interpret(source, "", tw);
+		return result != INTERPRET_OK;
+	}
+
+
 }

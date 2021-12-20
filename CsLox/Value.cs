@@ -1,5 +1,6 @@
 ﻿global using static CsLox.ValueType;
 global using static CsLox.ValueStatics;
+using System.Globalization;
 
 namespace CsLox;
 
@@ -40,7 +41,7 @@ struct Value
 		{
 			case ValueType.VAL_NIL: return "nil";
 			case ValueType.VAL_BOOL: return dValue != 0 ? "true" : "false";
-			case ValueType.VAL_NUMBER: return dValue.ToString();
+			case ValueType.VAL_NUMBER: return dValue.ToString(CultureInfo.InvariantCulture);
 			case ValueType.VAL_OBJ: return oValue.ToString()!;
 			default: return $"invalid value type {type}";
 		}
