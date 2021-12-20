@@ -5,11 +5,11 @@ class Chunk
 {
 	internal byte[] code;
 	int capacity;
-	int count;
+	public int count;
 	internal ValueArray constants;
 	internal List<int> lines;
 
-	public string FileName="";
+	public string FileName = "";
 
 	public Chunk()
 	{
@@ -67,9 +67,10 @@ class Chunk
 			tw.Write("{0,4} ", lines[offset]);
 
 		var instruction = (OpCode)code[offset];
+		var instructionString = instruction.ToString()[3..];
 		switch (instruction)
 		{
-			case OP_RETURN: 			
+			case OP_RETURN:
 			case OP_NEGATE:
 			case OP_ADD:
 			case OP_SUBTRACT:
@@ -84,24 +85,36 @@ class Chunk
 			case OP_GREATER:
 			case OP_LESS:
 			case OP_PRINT:
-				tw.WriteLine(instruction);
+				tw.WriteLine(instructionString);
 				return offset + 1;
 			case OP_CONSTANT:
 			case OP_DEFINE_GLOBAL:
 			case OP_GET_GLOBAL:
 			case OP_SET_GLOBAL:
 				var constant = code[offset + 1];
-				tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'", 
-					instruction, constant, constants[constant]));
+				tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'",
+					instructionString, constant, constants[constant]));
 				return offset + 2;
 			case OP_GET_LOCAL:
 			case OP_SET_LOCAL:
 				var slot = code[offset + 1];
-				tw.WriteLine($"{instruction} {slot}");
+				tw.WriteLine($"{instructionString} {slot}");
 				return offset + 2;
+			case OP_JUMP:
+			case OP_JUMP_IF_FALSE:
+				return jumpInstruction(1);
 			default:
 				tw.WriteLine($"Unknown opcode {instruction}");
 				return offset + 1;
 		}
+
+		int jumpInstruction(int sign)
+		{
+			ushort jump = (ushort)(code[offset + 1] << 8);
+			jump |= code[offset + 2];
+			tw.WriteLine($"{instructionString} {offset} -> {offset + 3 + sign * jump}");
+			return offset + 3;
+		}
+
 	}
 }

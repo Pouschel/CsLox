@@ -27,7 +27,11 @@ public class VM
 	}
 
 	private byte READ_BYTE() => chunk.code[ip++];
-
+	private ushort READ_SHORT()
+	{
+		ip += 2;
+		return (ushort)((chunk.code[ip - 2] << 8) | chunk.code[ip - 1]);
+	}
 	private Value READ_CONSTANT() => chunk.constants[READ_BYTE()];
 	private ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
 
@@ -74,10 +78,22 @@ public class VM
 					}
 					push(NUMBER_VAL(-AS_NUMBER(pop())));
 					break;
+				case OP_JUMP:
+					{
+						ushort offset = READ_SHORT();
+						ip += offset;
+						break;
+					}
+				case OP_JUMP_IF_FALSE:
+					{
+						ushort offset = READ_SHORT();
+						if (isFalsey(peek(0))) ip += offset;
+						break;
+					}
 				case OP_RETURN: return INTERPRET_OK;
 				case OP_PRINT:
-						Console.WriteLine(pop());
-						break;
+					Console.WriteLine(pop());
+					break;
 				case OP_CONSTANT:
 					Value constant = READ_CONSTANT();
 					push(constant);

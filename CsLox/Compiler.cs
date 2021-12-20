@@ -208,6 +208,10 @@ internal class Compiler
 			printStatement();
 
 		}
+		else if (match(TOKEN_IF))
+		{
+			ifStatement();
+		}
 		else if (match(TOKEN_LEFT_BRACE))
 		{
 			beginScope();
@@ -218,6 +222,39 @@ internal class Compiler
 		{
 			expressionStatement();
 		}
+	}
+	void ifStatement()
+	{
+		consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+		expression();
+		consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+		int thenJump = emitJump(OP_JUMP_IF_FALSE);
+		emitByte(OP_POP);
+		statement();
+		int elseJump = emitJump(OP_JUMP);
+		patchJump(thenJump);
+		emitByte(OP_POP);
+		if (match(TOKEN_ELSE)) statement();
+		patchJump(elseJump);
+	}
+	int emitJump(OpCode instruction)
+	{
+		emitByte(instruction);
+		emitByte(0xff);
+		emitByte(0xff);
+		return currentChunk().count - 2;
+	}
+	void patchJump(int offset)
+	{
+		// -2 to adjust for the bytecode for the jump offset itself.
+		int jump = currentChunk().count - offset - 2;
+
+		if (jump > ushort.MaxValue)
+		{
+			error("Too much code to jump over.");
+		}
+		currentChunk().code[offset] = (byte)( (jump >> 8) & 0xff);
+		currentChunk().code[offset + 1] =(byte) (jump & 0xff);
 	}
 	void block()
 	{
