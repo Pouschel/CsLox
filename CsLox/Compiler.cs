@@ -84,7 +84,7 @@ internal class Compiler
 		SetRule(TOKEN_IDENTIFIER, variable, null, PREC_NONE);
 		SetRule(TOKEN_STRING, _string, null, PREC_NONE);
 		SetRule(TOKEN_NUMBER, number, null, PREC_NONE);
-		SetRule(TOKEN_AND, null, null, PREC_NONE);
+		SetRule(TOKEN_AND, null, and_, PREC_AND);
 		SetRule(TOKEN_CLASS, null, null, PREC_NONE);
 		SetRule(TOKEN_ELSE, null, null, PREC_NONE);
 		SetRule(TOKEN_FALSE, literal, null, PREC_NONE);
@@ -92,7 +92,7 @@ internal class Compiler
 		SetRule(TOKEN_FUN, null, null, PREC_NONE);
 		SetRule(TOKEN_IF, null, null, PREC_NONE);
 		SetRule(TOKEN_NIL, literal, null, PREC_NONE);
-		SetRule(TOKEN_OR, null, null, PREC_NONE);
+		SetRule(TOKEN_OR, null, or_, PREC_OR);
 		SetRule(TOKEN_PRINT, null, null, PREC_NONE);
 		SetRule(TOKEN_RETURN, null, null, PREC_NONE);
 		SetRule(TOKEN_SUPER, null, null, PREC_NONE);
@@ -237,6 +237,24 @@ internal class Compiler
 		if (match(TOKEN_ELSE)) statement();
 		patchJump(elseJump);
 	}
+	void and_(bool canAssign)
+	{
+		int endJump = emitJump(OP_JUMP_IF_FALSE);
+		emitByte(OP_POP);
+		parsePrecedence(PREC_AND);
+		patchJump(endJump);
+	}
+	void or_(bool canAssign)
+	{
+		int elseJump = emitJump(OP_JUMP_IF_FALSE);
+		int endJump = emitJump(OP_JUMP);
+
+		patchJump(elseJump);
+		emitByte(OP_POP);
+
+		parsePrecedence(PREC_OR);
+		patchJump(endJump);
+	}
 	int emitJump(OpCode instruction)
 	{
 		emitByte(instruction);
@@ -349,7 +367,6 @@ internal class Compiler
 		double value = double.Parse(parser.previous.StringValue);
 		emitConstant(NUMBER_VAL(value));
 	}
-
 	void literal(bool canAssign)
 	{
 		switch (parser.previous.type)

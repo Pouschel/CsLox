@@ -1,7 +1,9 @@
 var b=false;
+var a=true;
 
-if (b) 
+if (a and b) 
 	print "Hello";
-else print "Bye";
+else 
+	print "Bye";
 
 print "End";
