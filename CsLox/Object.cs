@@ -5,6 +5,7 @@ namespace CsLox;
 
 enum ObjType
 {
+	OBJ_FUNCTION, 
 	OBJ_STRING,
 }
 
@@ -15,6 +16,23 @@ internal class Obj
 
 }
 
+internal class ObjFunction : Obj
+{
+	public int arity;
+	public Chunk chunk;
+	public ObjString name;
+
+	public ObjFunction()
+	{
+		this.type = OBJ_FUNCTION;
+		this.arity = 0;
+		this.name = new ObjString("");
+		this.chunk = new Chunk();
+	}
+
+	public override string ToString() => $"<fn {name.chars}>";
+
+}
 internal class ObjString : Obj, IEquatable<ObjString>
 {
 	public readonly string chars;
@@ -43,8 +61,10 @@ internal class ObjString : Obj, IEquatable<ObjString>
 static class ObjStatics
 {
 	public static ObjType OBJ_TYPE(Value value) => AS_OBJ(value).type;
+	public static bool IS_FUNCTION(Value value) => isObjType(value, OBJ_FUNCTION);
 	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
 	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
+	public static ObjFunction AS_FUNCTION(Value value) => ((ObjFunction)AS_OBJ(value));
 	public static string AS_CSTRING(Value value) => (((ObjString)AS_OBJ(value)).chars);
 
 	static bool isObjType(Value value, ObjType type)
