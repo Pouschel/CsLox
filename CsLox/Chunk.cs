@@ -1,25 +1,6 @@
 ﻿using System.Globalization;
 namespace CsLox;
 
-enum OpCode : byte
-{
-	OP_CONSTANT,
-	OP_NIL,
-	OP_TRUE,
-	OP_FALSE,
-	OP_EQUAL,
-	OP_GREATER,
-	OP_LESS,
-	OP_ADD,
-	OP_SUBTRACT,
-	OP_MULTIPLY,
-	OP_DIVIDE,
-	OP_NOT,
-	OP_NEGATE, 
-	OP_PRINT,
-	OP_RETURN,
-}
-
 class Chunk
 {
 	internal byte[] code;
@@ -98,6 +79,7 @@ class Chunk
 			case OP_TRUE:
 			case OP_FALSE:
 			case OP_NOT:
+			case OP_POP:
 			case OP_EQUAL:
 			case OP_GREATER:
 			case OP_LESS:
