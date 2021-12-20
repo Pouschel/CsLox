@@ -204,12 +204,37 @@ internal class Compiler
 		if (match(TOKEN_PRINT))
 		{
 			printStatement();
+
+		}
+		else if (match(TOKEN_LEFT_BRACE))
+		{
+			beginScope();
+			block();
+			endScope();
 		}
 		else
 		{
 			expressionStatement();
 		}
 	}
+	void block()
+	{
+		while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
+		{
+			declaration();
+		}
+
+		consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+	}
+	void beginScope()
+	{
+		current.scopeDepth++;
+	}
+	void endScope()
+	{
+		current.scopeDepth--;
+	}
+
 	void expressionStatement()
 	{
 		expression();
