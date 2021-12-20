@@ -1,5 +1,7 @@
-var breakfast = "beignets";
-var beverage = "cafe au lait";
-breakfast = "beignets with " + beverage;
+var x="Merle";
+{
+  var x="Puschel";
+  print x;
+}
 
-print breakfast;
+print x;

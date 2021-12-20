@@ -26,9 +26,9 @@ public class VM
 		globals = new();
 	}
 
-	private byte ReadByte() => chunk.code[ip++];
+	private byte READ_BYTE() => chunk.code[ip++];
 
-	private Value READ_CONSTANT() => chunk.constants[ReadByte()];
+	private Value READ_CONSTANT() => chunk.constants[READ_BYTE()];
 	private ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
 
 	private void push(Value val) => stack.Add(val);
@@ -60,7 +60,7 @@ public class VM
 			Console.WriteLine();
 			chunk.disassembleInstruction(ip, Console.Out);
 #endif
-			var instruction = (OpCode)ReadByte();
+			var instruction = (OpCode)READ_BYTE();
 			switch (instruction)
 			{
 				case OP_NOT:
@@ -86,6 +86,18 @@ public class VM
 				case OP_TRUE: push(BOOL_VAL(true)); break;
 				case OP_FALSE: push(BOOL_VAL(false)); break;
 				case OP_POP: pop(); break;
+				case OP_GET_LOCAL:
+					{
+						byte slot = READ_BYTE();
+						push(stack[slot]);
+						break;
+					}
+				case OP_SET_LOCAL:
+					{
+						byte slot = READ_BYTE();
+						stack[slot] = peek(0);
+						break;
+					}
 				case OP_GET_GLOBAL:
 					{
 						ObjString name = READ_STRING();

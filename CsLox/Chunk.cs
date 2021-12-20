@@ -94,6 +94,11 @@ class Chunk
 				tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'", 
 					instruction, constant, constants[constant]));
 				return offset + 2;
+			case OP_GET_LOCAL:
+			case OP_SET_LOCAL:
+				var slot = code[offset + 1];
+				tw.WriteLine($"{instruction} {slot}");
+				return offset + 2;
 			default:
 				tw.WriteLine($"Unknown opcode {instruction}");
 				return offset + 1;

@@ -235,7 +235,7 @@ internal class Compiler
 	void endScope()
 	{
 		current.scopeDepth--;
-		while (current.localCount > 0 
+		while (current.localCount > 0
 			&& current.locals[current.localCount - 1].depth > current.scopeDepth)
 		{
 			emitByte(OP_POP);
@@ -375,19 +375,46 @@ internal class Compiler
 	}
 	void namedVariable(Token name, bool canAssign)
 	{
-		byte arg = identifierConstant(name);
-		if (canAssign && match(TOKEN_EQUAL))
+		OpCode getOp, setOp;
+		int arg = resolveLocal(current, name);
+		if (arg != -1)
 		{
-			expression();
-			emitBytes(OP_SET_GLOBAL, arg);
+			getOp = OP_GET_LOCAL;
+			setOp = OP_SET_LOCAL;
 		}
 		else
 		{
-			emitBytes(OP_GET_GLOBAL, arg);
+			arg = identifierConstant(name);
+			getOp = OP_GET_GLOBAL;
+			setOp = OP_SET_GLOBAL;
 		}
-
+		if (canAssign && match(TOKEN_EQUAL))
+		{
+			expression();
+			emitBytes(setOp, (byte)arg);
+		}
+		else
+		{
+			emitBytes(getOp, (byte)arg);
+		}
 	}
 
+	int resolveLocal(CompilerState compiler, Token name)
+	{
+		for (int i = compiler.localCount - 1; i >= 0; i--)
+		{
+			ref Local local = ref compiler.locals[i];
+			if (identifiersEqual(name, local.name))
+			{
+				if (local.depth == -1)
+				{
+					error("Can't read local variable in its own initializer.");
+				}
+				return i;
+			}
+		}
+		return -1;
+	}
 	void consume(TokenType type, string message)
 	{
 		if (parser.current.type == type)
@@ -477,10 +504,17 @@ internal class Compiler
 	{
 		if (current.scopeDepth > 0)
 		{
+			markInitialized();
 			return;
 		}
 		emitBytes(OP_DEFINE_GLOBAL, global);
 	}
+
+	void markInitialized()
+	{
+		current.locals[current.localCount - 1].depth = current.scopeDepth;
+	}
+
 	void declareVariable()
 	{
 		if (current.scopeDepth == 0) return;
@@ -509,7 +543,7 @@ internal class Compiler
 		}
 		ref Local local = ref current.locals[current.localCount++];
 		local.name = name;
-		local.depth = current.scopeDepth;
+		local.depth = -1;
 	}
 
 }
