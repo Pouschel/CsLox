@@ -22,7 +22,9 @@ class Chunk
 	int capacity;
 	int count;
 	internal ValueArray constants;
-	List<int> lines;
+	internal List<int> lines;
+
+	public string FileName="";
 
 	public Chunk()
 	{

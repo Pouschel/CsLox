@@ -106,6 +106,7 @@ internal class Compiler
 		this.fileName = fileName;
 		scanner = new Scanner(source);
 		compilingChunk = rootChunk = new Chunk();
+		compilingChunk.FileName = fileName;
 		parser = new Parser();
 	}
 	public bool compile()
@@ -156,7 +157,7 @@ internal class Compiler
 	void number()
 	{
 		double value = double.Parse(parser.previous.StringValue);
-		emitConstant(value);
+		emitConstant(NUMBER_VAL(value));
 	}
 
 	void grouping()
