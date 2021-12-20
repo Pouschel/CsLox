@@ -36,7 +36,7 @@ internal struct Token
 
 	public string StringValue => source[start..end];
 
-	public ObjString StringStringValue => new ObjString(source[(start + 1)..(end + 1)]);
+	public ObjString StringStringValue => new ObjString(source[(start + 1)..(end - 1)]);
 
 }
 

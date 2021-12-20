@@ -61,10 +61,6 @@ public class VM
 			var instruction = (OpCode)ReadByte();
 			switch (instruction)
 			{
-				case OP_ADD: result = PopAndOp((a, b) => NUMBER_VAL(a + b)); break;
-				case OP_SUBTRACT: result = PopAndOp((a, b) => NUMBER_VAL(a - b)); break;
-				case OP_MULTIPLY: result = PopAndOp((a, b) => NUMBER_VAL(a * b)); break;
-				case OP_DIVIDE: result = PopAndOp((a, b) => NUMBER_VAL(a / b)); break;
 				case OP_NOT:
 					push(BOOL_VAL(isFalsey(pop())));
 					break;
@@ -85,14 +81,46 @@ public class VM
 				case OP_TRUE: push(BOOL_VAL(true)); break;
 				case OP_FALSE: push(BOOL_VAL(false)); break;
 				case OP_EQUAL:
-					Value b = pop();
-					Value a = pop();
-					push(BOOL_VAL(valuesEqual(a, b)));
-					break;
+					{
+						Value b = pop();
+						Value a = pop();
+						push(BOOL_VAL(valuesEqual(a, b)));
+						break;
+					}
 				case OP_GREATER: result = PopAndOp((a, b) => BOOL_VAL(a > b)); break;
 				case OP_LESS: result = PopAndOp((a, b) => BOOL_VAL(a < b)); break;
+				case OP_ADD:
+					{
+						if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
+						{
+							concatenate();
+						}
+						else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1)))
+						{
+							double b = AS_NUMBER(pop());
+							double a = AS_NUMBER(pop());
+							push(NUMBER_VAL(a + b));
+						}
+						else
+						{
+							runtimeError("Operands must be two numbers or two strings.");
+							return INTERPRET_RUNTIME_ERROR;
+						}
+						break;
+					}
+				case OP_SUBTRACT: result = PopAndOp((a, b) => NUMBER_VAL(a - b)); break;
+				case OP_MULTIPLY: result = PopAndOp((a, b) => NUMBER_VAL(a * b)); break;
+				case OP_DIVIDE: result = PopAndOp((a, b) => NUMBER_VAL(a / b)); break;
 			}
 			if (result != InterpretResult.INTERPRET_OK) return result;
+		}
+
+		void concatenate()
+		{
+			ObjString b = AS_STRING(pop());
+			ObjString a = AS_STRING(pop());
+			var result = new ObjString(a.chars + b.chars);
+			push(OBJ_VAL(result));
 		}
 
 		InterpretResult PopAndOp(Func<double, double, Value> func)

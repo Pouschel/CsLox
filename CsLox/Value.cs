@@ -41,6 +41,7 @@ struct Value
 			case ValueType.VAL_NIL: return "nil";
 			case ValueType.VAL_BOOL: return dValue != 0 ? "true" : "false";
 			case ValueType.VAL_NUMBER: return dValue.ToString();
+			case ValueType.VAL_OBJ: return oValue.ToString()!;
 			default: return $"invalid value type {type}";
 		}
 	}
@@ -51,7 +52,7 @@ static class ValueStatics
 	public static Value BOOL_VAL(bool value) => new(VAL_BOOL, value ? 1 : 0);
 	public static readonly Value NIL_VAL = new(VAL_NIL, 0);
 	public static Value NUMBER_VAL(double value) => new(ValueType.VAL_NUMBER, value);
-	public static Value OBJ_VAL(object value) => new(ValueType.VAL_OBJ, value);
+	public static Value OBJ_VAL(Obj value) => new(ValueType.VAL_OBJ, value);
 
 	public static Obj AS_OBJ(Value value) => (Obj) value.oValue; 
 	public static bool AS_BOOL( Value value) => value.dValue != 0;
@@ -70,6 +71,12 @@ static class ValueStatics
 			case VAL_BOOL: return AS_BOOL(a) == AS_BOOL(b);
 			case VAL_NIL: return true;
 			case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+			case VAL_OBJ:
+				{
+					ObjString aString = AS_STRING(a);
+					ObjString bString = AS_STRING(b);
+					return aString.chars == bString.chars;
+				}
 			default: return false; // Unreachable.
 		}
 	}

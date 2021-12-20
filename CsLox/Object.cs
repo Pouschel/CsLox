@@ -1,4 +1,5 @@
 ﻿global using static CsLox.ObjType;
+global using static CsLox.ObjStatics;
 
 namespace CsLox;
 
@@ -24,6 +25,7 @@ internal class ObjString : Obj
 		chars = v;
 	}
 
+	public override string ToString() => chars;
 }
 
 static class ObjStatics
