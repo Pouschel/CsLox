@@ -5,6 +5,7 @@ namespace CsLox;
 
 enum ObjType
 {
+	OBJ_BOUND_METHOD, 
 	OBJ_CLASS, 
 	OBJ_CLOSURE,
 	OBJ_FUNCTION,
@@ -153,11 +154,27 @@ class ObjInstance: Obj
 
 	public override string ToString() => $"{klass.name.chars} instance";
 
+}
+
+class ObjBoundMethod: Obj
+{
+	public Value receiver;
+	public ObjClosure method;
+
+	public ObjBoundMethod(Value receiver, ObjClosure method)
+	{
+		this.type = OBJ_BOUND_METHOD;
+		this.receiver = receiver;
+		this.method = method;
+	}
+
+	public override string ToString() => method.function.ToString();
 } 
 
 static class ObjStatics
 {
 	public static ObjType OBJ_TYPE(Value value) => AS_OBJ(value).type;
+	public static bool IS_BOUND_METHOD(Value value) => isObjType(value, OBJ_BOUND_METHOD);
 	public static bool IS_CLASS(Value value) => isObjType(value, OBJ_CLASS);
 	public static bool IS_CLOSURE(Value value) => isObjType(value, OBJ_CLOSURE);
 	public static bool IS_FUNCTION(Value value) => isObjType(value, OBJ_FUNCTION);
@@ -166,6 +183,7 @@ static class ObjStatics
 	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
 	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
 	public static ObjClosure AS_CLOSURE(Value value) => ((ObjClosure)AS_OBJ(value));
+	public static ObjBoundMethod AS_BOUND_METHOD(Value value) => ((ObjBoundMethod)AS_OBJ(value));
 	public static ObjClass AS_CLASS(Value value) => ((ObjClass)AS_OBJ(value));
 	public static ObjFunction AS_FUNCTION(Value value) => ((ObjFunction)AS_OBJ(value));
 	public static ObjInstance AS_INSTANCE(Value value) => ((ObjInstance)AS_OBJ(value));

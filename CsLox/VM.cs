@@ -202,7 +202,7 @@ public class VM
 						byte slot = READ_BYTE();
 						var upvalue = frame.closure!.upvalues[slot];
 						int slotIndex = upvalue.slotIndex;
-						push(slotIndex>= 0 ? stack[slotIndex]: upvalue.closed);
+						push(slotIndex >= 0 ? stack[slotIndex] : upvalue.closed);
 						break;
 					}
 				case OP_SET_UPVALUE:
@@ -231,8 +231,11 @@ public class VM
 							push(value);
 							break;
 						}
-						runtimeError($"Undefined property '{name.chars}'.");
-						return INTERPRET_RUNTIME_ERROR;
+						if (!bindMethod(instance.klass, name))
+						{
+							return INTERPRET_RUNTIME_ERROR;
+						}
+						break; ;
 					}
 				case OP_SET_PROPERTY:
 					{
@@ -341,7 +344,7 @@ public class VM
 
 	void closeUpvalues(int last)
 	{
-		while (openUpvalues != null &&  openUpvalues.slotIndex >= last)
+		while (openUpvalues != null && openUpvalues.slotIndex >= last)
 		{
 			ObjUpvalue upvalue = openUpvalues;
 			upvalue.closed = stack[upvalue.slotIndex];
@@ -388,6 +391,11 @@ public class VM
 		{
 			switch (OBJ_TYPE(callee))
 			{
+				case OBJ_BOUND_METHOD:
+					{
+						ObjBoundMethod bound = AS_BOUND_METHOD(callee);
+						return call(bound.method, argCount);
+					}
 				case OBJ_CLASS:
 					{
 						ObjClass klass = AS_CLASS(callee);
@@ -415,6 +423,19 @@ public class VM
 		}
 		runtimeError("Can only call functions and classes.");
 		return false;
+	}
+	bool bindMethod(ObjClass klass, ObjString name)
+	{
+		Value method;
+		if (!tableGet(klass.methods, name, out method))
+		{
+			runtimeError($"Undefined property '{name.chars}'.");
+			return false;
+		}
+		ObjBoundMethod bound = new ObjBoundMethod(peek(0), AS_CLOSURE(method));
+		pop();
+		push(OBJ_VAL(bound));
+		return true;
 	}
 	void defineNative(string name, NativeFn function)
 	{
