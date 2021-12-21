@@ -55,6 +55,9 @@ internal class ObjNative: Obj
 		this.type = OBJ_NATIVE;
 		this.function = function;
 	}
+
+	public override string ToString() => "<native fn>";
+
 }
 
 internal class ObjString : Obj, IEquatable<ObjString>
