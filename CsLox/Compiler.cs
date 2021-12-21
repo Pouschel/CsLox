@@ -21,6 +21,7 @@ enum Precedence
 enum FunctionType
 {
 	TYPE_FUNCTION,
+	TYPE_METHOD,
 	TYPE_SCRIPT
 }
 
@@ -43,7 +44,7 @@ class ParseRule
 
 struct Local
 {
-	public Token name;
+	public string name;
 	public int depth;
 	public bool isCaptured;
 }
@@ -70,13 +71,18 @@ class CompilerState
 		this.function = new ObjFunction();
 		ref Local local = ref locals[localCount++];
 		local.depth = 0;
-		local.name = new Token()
-		{
-			source = ""
-		};
+		local.isCaptured = false;
+		if (type != FunctionType.TYPE_FUNCTION)
+			local.name = "this";
+		else local.name = "";
 	}
 
 	public override string ToString() => $"{function.NameOrScript}[{function.arity}]";
+}
+
+class ClassCompiler
+{
+	public ClassCompiler? enclosing;
 }
 
 internal class Compiler
@@ -84,6 +90,7 @@ internal class Compiler
 	Scanner scanner;
 	Parser parser;
 	CompilerState current;
+	ClassCompiler? currentClass;
 	string fileName;
 	TextWriter tw;
 	ParseRule[] rules;
@@ -125,7 +132,7 @@ internal class Compiler
 		SetRule(TOKEN_PRINT, null, null, PREC_NONE);
 		SetRule(TOKEN_RETURN, null, null, PREC_NONE);
 		SetRule(TOKEN_SUPER, null, null, PREC_NONE);
-		SetRule(TOKEN_THIS, null, null, PREC_NONE);
+		SetRule(TOKEN_THIS, this_, null, PREC_NONE);
 		SetRule(TOKEN_TRUE, literal, null, PREC_NONE);
 		SetRule(TOKEN_VAR, null, null, PREC_NONE);
 		SetRule(TOKEN_WHILE, null, null, PREC_NONE);
@@ -194,6 +201,9 @@ internal class Compiler
 		declareVariable();
 		emitBytes(OP_CLASS, nameConstant);
 		defineVariable(nameConstant);
+		ClassCompiler classCompiler=new ClassCompiler();
+		classCompiler.enclosing = this.currentClass;
+		this.currentClass = classCompiler;
 		namedVariable(className, false);
 		consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 		while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
@@ -202,6 +212,7 @@ internal class Compiler
 		}
 		consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 		emitByte(OP_POP);
+		this.currentClass = this.currentClass.enclosing;
 	}
 
 	void synchronize()
@@ -234,7 +245,6 @@ internal class Compiler
 		function(TYPE_FUNCTION);
 		defineVariable(global);
 	}
-
 	CompilerState initCompiler(FunctionType type)
 	{
 		CompilerState compiler = new CompilerState(type);
@@ -280,7 +290,7 @@ internal class Compiler
 	{
 		consume(TOKEN_IDENTIFIER, "Expect method name.");
 		byte constant = identifierConstant(parser.previous);
-		FunctionType type = TYPE_FUNCTION;
+		FunctionType type = TYPE_METHOD;
 		function(type);
 		emitBytes(OP_METHOD, constant);
 	}
@@ -672,6 +682,15 @@ internal class Compiler
 	{
 		namedVariable(parser.previous, canAssign);
 	}
+	void this_(bool canAssign)
+	{
+		if (currentClass == null)
+		{
+			error("Can't use 'this' outside of a class.");
+			return;
+		}
+		variable(false);
+	}
 	void namedVariable(Token name, bool canAssign)
 	{
 		OpCode getOp, setOp;
@@ -896,7 +915,7 @@ internal class Compiler
 			return;
 		}
 		ref Local local = ref current.locals[current.localCount++];
-		local.name = name;
+		local.name = name.StringValue;
 		local.depth = -1;
 		local.isCaptured = false;
 	}

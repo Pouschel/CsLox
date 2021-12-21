@@ -394,6 +394,7 @@ public class VM
 				case OBJ_BOUND_METHOD:
 					{
 						ObjBoundMethod bound = AS_BOUND_METHOD(callee);
+						stack[stackTop - argCount - 1] = bound.receiver;
 						return call(bound.method, argCount);
 					}
 				case OBJ_CLASS:

@@ -13,7 +13,7 @@ class Program
 		Console.WriteLine("CsLox v1");
 		if (args.Length > 0)
 			runFile(args[0]);
-		Console.ReadLine();
+		//Console.ReadLine();
 	}
 
 	static void runFile(string path)
@@ -36,7 +36,8 @@ public class Globals
 	internal const int UINT8_COUNT = 256;
 	internal static bool identifiersEqual(in Token a, in Token b)
 		=> a.StringValue == b.StringValue;
-
+	internal static bool identifiersEqual(in Token a, string b)
+	=> a.StringValue == b;
 	internal static InterpretResult interpret(string source, string fileName, TextWriter tw
 		, bool debugPrintCode = false)
 	{
