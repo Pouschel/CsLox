@@ -8,6 +8,7 @@ enum ObjType
 	OBJ_CLASS, 
 	OBJ_CLOSURE,
 	OBJ_FUNCTION,
+	OBJ_INSTANCE,
 	OBJ_NATIVE,
 	OBJ_STRING,
 	OBJ_UPVALUE,
@@ -134,19 +135,38 @@ class ObjClass: Obj
 
 	public override string ToString() => name.chars;
 
+}
+
+class ObjInstance: Obj
+{
+	public ObjClass klass;
+	public Table fields;
+
+	public ObjInstance(ObjClass klass)
+	{
+		type = OBJ_INSTANCE;
+		this.klass = klass;
+		fields = new Table();
+	}
+
+	public override string ToString() => $"{klass.name.chars} instance";
+
 } 
+
 static class ObjStatics
 {
 	public static ObjType OBJ_TYPE(Value value) => AS_OBJ(value).type;
 	public static bool IS_CLASS(Value value) => isObjType(value, OBJ_CLASS);
 	public static bool IS_CLOSURE(Value value) => isObjType(value, OBJ_CLOSURE);
 	public static bool IS_FUNCTION(Value value) => isObjType(value, OBJ_FUNCTION);
+	public static bool IS_INSTANCE(Value value) => isObjType(value, OBJ_INSTANCE);
 	public static bool IS_NATIVE(Value value) => isObjType(value, OBJ_NATIVE);
 	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
 	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
 	public static ObjClosure AS_CLOSURE(Value value) => ((ObjClosure)AS_OBJ(value));
 	public static ObjClass AS_CLASS(Value value) => ((ObjClass)AS_OBJ(value));
 	public static ObjFunction AS_FUNCTION(Value value) => ((ObjFunction)AS_OBJ(value));
+	public static ObjInstance AS_INSTANCE(Value value) => ((ObjInstance)AS_OBJ(value));
 	public static NativeFn AS_NATIVE(Value value) => ((ObjNative)AS_OBJ(value)).function;
 	public static string AS_CSTRING(Value value) => (((ObjString)AS_OBJ(value)).chars);
 

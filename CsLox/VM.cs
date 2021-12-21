@@ -345,6 +345,12 @@ public class VM
 		{
 			switch (OBJ_TYPE(callee))
 			{
+				case OBJ_CLASS:
+					{
+						ObjClass klass = AS_CLASS(callee);
+						stack[stackTop - argCount - 1] = OBJ_VAL(new ObjInstance(klass));
+						return true;
+					}
 				case OBJ_CLOSURE:
 					return call(AS_CLOSURE(callee), argCount);
 				case OBJ_NATIVE:
