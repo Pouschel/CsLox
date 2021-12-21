@@ -5,6 +5,7 @@ namespace CsLox;
 
 enum ObjType
 {
+	OBJ_CLASS, 
 	OBJ_CLOSURE,
 	OBJ_FUNCTION,
 	OBJ_NATIVE,
@@ -94,6 +95,7 @@ class ObjUpvalue : Obj
 
 	public ObjUpvalue(int local)
 	{
+		this.type = OBJ_UPVALUE;
 		this.slotIndex = local;
 		this.closed = NIL_VAL;
 		this.next = null;
@@ -110,6 +112,7 @@ class ObjClosure : Obj
 	public int upvalueCount;
 	public ObjClosure(ObjFunction function)
 	{
+		this.type = OBJ_CLOSURE;
 		this.function = function;
 		this.upvalueCount = function.upvalueCount; 
 		upvalues = new ObjUpvalue[function.upvalueCount];
@@ -118,15 +121,31 @@ class ObjClosure : Obj
 	public override string ToString() => function.ToString();
 
 }
+
+class ObjClass: Obj
+{
+	public ObjString name;
+
+	public ObjClass(ObjString name)
+	{
+		this.type = OBJ_CLASS;
+		this.name = name;
+	}
+
+	public override string ToString() => name.chars;
+
+} 
 static class ObjStatics
 {
 	public static ObjType OBJ_TYPE(Value value) => AS_OBJ(value).type;
+	public static bool IS_CLASS(Value value) => isObjType(value, OBJ_CLASS);
 	public static bool IS_CLOSURE(Value value) => isObjType(value, OBJ_CLOSURE);
 	public static bool IS_FUNCTION(Value value) => isObjType(value, OBJ_FUNCTION);
 	public static bool IS_NATIVE(Value value) => isObjType(value, OBJ_NATIVE);
 	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
 	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
 	public static ObjClosure AS_CLOSURE(Value value) => ((ObjClosure)AS_OBJ(value));
+	public static ObjClass AS_CLASS(Value value) => ((ObjClass)AS_OBJ(value));
 	public static ObjFunction AS_FUNCTION(Value value) => ((ObjFunction)AS_OBJ(value));
 	public static NativeFn AS_NATIVE(Value value) => ((ObjNative)AS_OBJ(value)).function;
 	public static string AS_CSTRING(Value value) => (((ObjString)AS_OBJ(value)).chars);
