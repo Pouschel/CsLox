@@ -96,7 +96,7 @@ internal class Compiler
 		SetRule(TOKEN_LEFT_BRACE, null, null, PREC_NONE);
 		SetRule(TOKEN_RIGHT_BRACE, null, null, PREC_NONE);
 		SetRule(TOKEN_COMMA, null, null, PREC_NONE);
-		SetRule(TOKEN_DOT, null, null, PREC_NONE);
+		SetRule(TOKEN_DOT, null, dot, PREC_CALL);
 		SetRule(TOKEN_MINUS, unary, binary, PREC_TERM);
 		SetRule(TOKEN_PLUS, null, binary, PREC_TERM);
 		SetRule(TOKEN_SEMICOLON, null, null, PREC_NONE);
@@ -273,6 +273,21 @@ internal class Compiler
 	{
 		byte argCount = argumentList();
 		emitBytes(OP_CALL, argCount);
+	}
+	void dot(bool canAssign)
+	{
+		consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
+		byte name = identifierConstant(parser.previous);
+
+		if (canAssign && match(TOKEN_EQUAL))
+		{
+			expression();
+			emitBytes(OP_SET_PROPERTY, name);
+		}
+		else
+		{
+			emitBytes(OP_GET_PROPERTY, name);
+		}
 	}
 	byte argumentList()
 	{
