@@ -61,7 +61,7 @@ class Chunk
 	internal int disassembleInstruction(int offset, TextWriter tw)
 	{
 		tw.Write($"{offset:0000} ");
-		if (offset > 0 && lines[offset] == lines[offset - 1])
+		if (offset>=lines.Count || offset > 0 && lines[offset] == lines[offset - 1])
 			tw.Write("   | ");
 		else
 			tw.Write("{0,4} ", lines[offset]);
@@ -97,6 +97,7 @@ class Chunk
 				return offset + 2;
 			case OP_GET_LOCAL:
 			case OP_SET_LOCAL:
+			case OP_CALL:
 				var slot = code[offset + 1];
 				tw.WriteLine($"{instructionString} {slot}");
 				return offset + 2;

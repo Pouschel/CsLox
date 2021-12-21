@@ -20,7 +20,7 @@ class Program
 			Interlocked.Increment(ref nTests);
 			var source = File.ReadAllText(fileName);
 			var sw = new StringWriter();
-			Globals.RunCode(source, sw);
+			Globals.RunTestCode(source, sw);
 			var res = sw.ToString().ReplaceLineEndings();
 			var expected = GetSourceOutput(source).ReplaceLineEndings();
 			if (res == expected)

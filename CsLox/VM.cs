@@ -21,38 +21,44 @@ class CallFrame
 
 public class VM
 {
+	public int FRAMES_MAX = 1000;
+	public bool DumpStackOnError = true;
 
-	//Chunk chunk;
 	List<Value> stack;
+	int stackTop;
 	List<CallFrame> frames;
 	int frameCount;
 	Table globals;
 	TextWriter tw;
 
-
-
 	internal VM(TextWriter tw)
 	{
-		stack = new();
+		stack = new(); stackTop = 0;
 		globals = new();
 		frames = new();
 		this.tw = tw;
 	}
 
-	private void push(Value val) => stack.Add(val);
+	private void push(Value val)
+	{
+		if (stackTop == stack.Count)
+			stack.Add(val);
+		else
+			stack[stackTop] = val;
+		stackTop++;
+	}
 
 	private Value pop()
 	{
-		var ret = stack[stack.Count - 1];
-		stack.RemoveAt(stack.Count - 1);
+		var ret = stack[--stackTop];
 		return ret;
 	}
 	Value peek(int distance)
 	{
-		return stack[stack.Count - 1 - distance];
+		return stack[stackTop - 1 - distance];
 	}
 
-	CallFrame CreateFrame(ObjFunction function)
+	CallFrame CreateFrame(ObjFunction function, int argCount)
 	{
 		CallFrame? frame = null;
 		if (frameCount < frames.Count)
@@ -63,13 +69,13 @@ public class VM
 			frames.Add(frame);
 		frame.function = function;
 		frame.ip = 0;
-		frame.slotIndex = stack.Count;
+		frame.slotIndex = stackTop - argCount;
 		return frame;
 	}
 	internal InterpretResult interpret(ObjFunction function)
 	{
-		CreateFrame(function);
 		push(OBJ_VAL(function));
+		call(function, 0);
 		return run();
 	}
 
@@ -77,24 +83,27 @@ public class VM
 	{
 
 		CallFrame frame = frames[frameCount - 1];
-		var chunk = frame.function!.chunk;
+		Chunk chunk() => frame.function!.chunk;
 
-		byte READ_BYTE() => chunk.code[frame.ip++];
+		byte READ_BYTE() => chunk().code[frame.ip++];
 		ushort READ_SHORT()
 		{
 			frame.ip += 2;
-			return (ushort)((chunk.code[frame.ip - 2] << 8) | chunk.code[frame.ip - 1]);
+			return (ushort)((chunk().code[frame.ip - 2] << 8) | chunk().code[frame.ip - 1]);
 		}
-		Value READ_CONSTANT() => chunk.constants[READ_BYTE()];
+		Value READ_CONSTANT() => chunk().constants[READ_BYTE()];
 		ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
 
-		InterpretResult result = INTERPRET_OK;
+		InterpretResult iresult = INTERPRET_OK;
 		while (true)
 		{
 #if DEBUG_TRACE_EXECUTION
 			Console.Write("          ");
-			foreach (var slot in stack)
+			for (int i = 0; i < stackTop; i++)
 			{
+				var slot = stack[i];
+				if (i == frame.slotIndex)
+					Console.Write(" | ");
 				Console.Write($"[{slot}]");
 			}
 			Console.WriteLine();
@@ -132,7 +141,30 @@ public class VM
 						frame.ip -= offset;
 						break;
 					}
-				case OP_RETURN: return INTERPRET_OK;
+				case OP_CALL:
+					{
+						int argCount = READ_BYTE();
+						if (!callValue(peek(argCount), argCount))
+						{
+							return INTERPRET_RUNTIME_ERROR;
+						}
+						frame = frames[frameCount - 1];
+						break;
+					}
+				case OP_RETURN:
+					{
+						Value result = pop();
+						frameCount--;
+						if (frameCount == 0)
+						{
+							pop();
+							return INTERPRET_OK;
+						}
+						stackTop = frame.slotIndex;
+						push(result);
+						frame = frames[frameCount - 1];
+						break;
+					}
 				case OP_PRINT:
 					tw.WriteLine(pop());
 					break;
@@ -193,8 +225,8 @@ public class VM
 						push(BOOL_VAL(valuesEqual(a, b)));
 						break;
 					}
-				case OP_GREATER: result = PopAndOp((a, b) => BOOL_VAL(a > b)); break;
-				case OP_LESS: result = PopAndOp((a, b) => BOOL_VAL(a < b)); break;
+				case OP_GREATER: iresult = PopAndOp((a, b) => BOOL_VAL(a > b)); break;
+				case OP_LESS: iresult = PopAndOp((a, b) => BOOL_VAL(a < b)); break;
 				case OP_ADD:
 					{
 						if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
@@ -214,13 +246,44 @@ public class VM
 						}
 						break;
 					}
-				case OP_SUBTRACT: result = PopAndOp((a, b) => NUMBER_VAL(a - b)); break;
-				case OP_MULTIPLY: result = PopAndOp((a, b) => NUMBER_VAL(a * b)); break;
-				case OP_DIVIDE: result = PopAndOp((a, b) => NUMBER_VAL(a / b)); break;
+				case OP_SUBTRACT: iresult = PopAndOp((a, b) => NUMBER_VAL(a - b)); break;
+				case OP_MULTIPLY: iresult = PopAndOp((a, b) => NUMBER_VAL(a * b)); break;
+				case OP_DIVIDE: iresult = PopAndOp((a, b) => NUMBER_VAL(a / b)); break;
 			}
-			if (result != INTERPRET_OK) return result;
+			if (iresult != INTERPRET_OK) return iresult;
 		}
 
+	}
+
+	bool callValue(Value callee, int argCount)
+	{
+		if (IS_OBJ(callee))
+		{
+			switch (OBJ_TYPE(callee))
+			{
+				case OBJ_FUNCTION:
+					return call(AS_FUNCTION(callee), argCount);
+				default:
+					break; // Non-callable object type.
+			}
+		}
+		runtimeError("Can only call functions and classes.");
+		return false;
+	}
+	bool call(ObjFunction function, int argCount)
+	{
+		if (argCount != function.arity)
+		{
+			runtimeError($"Expected {function.arity} arguments but got {argCount}.");
+			return false;
+		}
+		if (frameCount >= FRAMES_MAX)
+		{
+			runtimeError("Stack overflow.");
+			return false;
+		}
+		CreateFrame(function, argCount + 1);
+		return true;
 	}
 
 	void concatenate()
@@ -253,7 +316,19 @@ public class VM
 		var text = string.IsNullOrEmpty(chunk.FileName) ? msg : $"{chunk.FileName}({line}): {msg}";
 		tw.WriteLine(text);
 		Trace.WriteLine(text);
+		if (DumpStackOnError) dumpStack();
 		resetStack();
+	}
+
+	void dumpStack()
+	{
+		for (int i = frameCount - 1; i >= 0; i--)
+		{
+			CallFrame frame = frames[i];
+			ObjFunction function = frame.function!;
+			int instruction = frame.ip-1;
+			tw.WriteLine($"[line {function.chunk.lines[instruction]}] in {function.NameOrScript}");
+		}
 	}
 
 	void resetStack()

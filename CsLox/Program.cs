@@ -20,7 +20,7 @@ class Program
 	{
 		string source = File.ReadAllText(path);
 		//DumpTokens(source);
-		InterpretResult result = interpret(source, path, Console.Out, false);
+		InterpretResult result = interpret(source, path, Console.Out, true);
 		if (result == INTERPRET_COMPILE_ERROR) Environment.Exit(65);
 		if (result == INTERPRET_RUNTIME_ERROR) Environment.Exit(70);
 	}
@@ -55,13 +55,21 @@ public class Globals
 	{
 		string source = File.ReadAllText(path);
 		InterpretResult result = interpret(source, path, tw, debugPrintCode);
-		return result != INTERPRET_OK;
+		return result == INTERPRET_OK;
 	}
 
-	public static bool RunCode(string source, TextWriter tw)
+	public static bool RunTestCode(string source, TextWriter tw)
 	{
-		InterpretResult result = interpret(source, "", tw);
-		return result != INTERPRET_OK;
+		var compiler = new Compiler(source, "", tw);
+		var function = compiler.compile();
+		if (function == null)
+			return false;
+		VM vm = new VM(tw)
+		{
+			DumpStackOnError = false
+		};
+		InterpretResult result = vm.interpret(function);
+		return result == INTERPRET_OK;
 	}
 
 

@@ -86,7 +86,7 @@ internal class Compiler
 
 	void InitTable()
 	{
-		SetRule(TOKEN_LEFT_PAREN, grouping, null);
+		SetRule(TOKEN_LEFT_PAREN, grouping, call, PREC_CALL);
 		SetRule(TOKEN_RIGHT_PAREN, null, null, PREC_NONE);
 		SetRule(TOKEN_LEFT_BRACE, null, null, PREC_NONE);
 		SetRule(TOKEN_RIGHT_BRACE, null, null, PREC_NONE);
@@ -242,6 +242,29 @@ internal class Compiler
 
 		ObjFunction function = endCompiler();
 		emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
+	}
+	void call(bool canAssign)
+	{
+		byte argCount = argumentList();
+		emitBytes(OP_CALL, argCount);
+	}
+	byte argumentList()
+	{
+		byte argCount = 0;
+		if (!check(TOKEN_RIGHT_PAREN))
+		{
+			do
+			{
+				expression();
+				if (argCount == byte.MaxValue)
+				{
+					error("Can't have more than 255 arguments.");
+				}
+				argCount++;
+			} while (match(TOKEN_COMMA));
+		}
+		consume(TOKEN_RIGHT_PAREN, "Expect ')' after arguments.");
+		return argCount;
 	}
 	void varDeclaration()
 	{
@@ -670,7 +693,11 @@ internal class Compiler
 		return function;
 	}
 
-	void emitReturn() => emitByte(OP_RETURN);
+	void emitReturn()
+	{
+		emitByte(OP_NIL);
+		emitByte(OP_RETURN);
+	}
 
 	void emitByte(byte by) => currentChunk().write(by, parser.previous.line);
 	void emitByte(OpCode op) => currentChunk().write(op, parser.previous.line);
