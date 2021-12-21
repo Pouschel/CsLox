@@ -5,6 +5,17 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "(Windows) Starten",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "C:/Code/CsLox/CsLox/bin/Debug/net6.0/csLox.exe",
+      "args": [ "${file}"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "internalConsole"
+    },
+    {
       "name": ".NET Core Launch (console)",
       "type": "coreclr",
       "request": "launch",

@@ -88,11 +88,15 @@ internal class ObjString : Obj, IEquatable<ObjString>
 
 class ObjUpvalue : Obj
 {
-	public int slotIndex;
+	public int slotIndex; // -1 when closed
+	public Value closed;	// value when closed
+	public ObjUpvalue? next;
 
 	public ObjUpvalue(int local)
 	{
 		this.slotIndex = local;
+		this.closed = NIL_VAL;
+		this.next = null;
 	}
 
 	public override string ToString() => "upvalue";

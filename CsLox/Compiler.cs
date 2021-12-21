@@ -45,6 +45,7 @@ struct Local
 {
 	public Token name;
 	public int depth;
+	public bool isCaptured;
 }
 
 struct Upvalue
@@ -484,7 +485,14 @@ internal class Compiler
 		while (current.localCount > 0
 			&& current.locals[current.localCount - 1].depth > current.scopeDepth)
 		{
-			emitByte(OP_POP);
+			if (current.locals[current.localCount - 1].isCaptured)
+			{
+				emitByte(OP_CLOSE_UPVALUE);
+			}
+			else
+			{
+				emitByte(OP_POP);
+			}
 			current.localCount--;
 		}
 	}
@@ -654,6 +662,7 @@ internal class Compiler
 		int local = resolveLocal(compiler.enclosing, name);
 		if (local != -1)
 		{
+			compiler.enclosing.locals[local].isCaptured = true;
 			return addUpvalue(compiler, (byte)local, true);
 		}
 		int upvalue = resolveUpvalue(compiler.enclosing, name);
@@ -843,6 +852,7 @@ internal class Compiler
 		ref Local local = ref current.locals[current.localCount++];
 		local.name = name;
 		local.depth = -1;
+		local.isCaptured = false;
 	}
 
 }

@@ -85,6 +85,7 @@ class Chunk
 			case OP_GREATER:
 			case OP_LESS:
 			case OP_PRINT:
+			case OP_CLOSE_UPVALUE:
 				tw.WriteLine(instructionString);
 				return offset + 1;
 			case OP_CONSTANT:

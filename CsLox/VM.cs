@@ -29,6 +29,7 @@ public class VM
 	int frameCount;
 	Table globals;
 	TextWriter tw;
+	ObjUpvalue? openUpvalues;
 
 	internal VM(TextWriter tw)
 	{
@@ -199,15 +200,18 @@ public class VM
 				case OP_GET_UPVALUE:
 					{
 						byte slot = READ_BYTE();
-						int slotIndex = frame.closure!.upvalues[slot].slotIndex;
-						push(stack[slotIndex]);
+						var upvalue = frame.closure!.upvalues[slot];
+						int slotIndex = upvalue.slotIndex;
+						push(slotIndex>= 0 ? stack[slotIndex]: upvalue.closed);
 						break;
 					}
 				case OP_SET_UPVALUE:
 					{
 						byte slot = READ_BYTE();
-						int slotIndex = frame.closure!.upvalues[slot].slotIndex;
-						stack[slotIndex] = peek(0);
+						var upvalue = frame.closure!.upvalues[slot];
+						int slotIndex = upvalue.slotIndex;
+						if (slotIndex >= 0) stack[slotIndex] = peek(0);
+						else upvalue.closed = peek(0);
 						break;
 					}
 				case OP_EQUAL:
@@ -271,9 +275,14 @@ public class VM
 						}
 						break;
 					}
+				case OP_CLOSE_UPVALUE:
+					closeUpvalues(stackTop - 1);
+					pop();
+					break;
 				case OP_RETURN:
 					{
 						Value result = pop();
+						closeUpvalues(frame.slotIndex);
 						frameCount--;
 						if (frameCount == 0)
 						{
@@ -290,9 +299,40 @@ public class VM
 		}
 	}
 
+	void closeUpvalues(int last)
+	{
+		while (openUpvalues != null &&  openUpvalues.slotIndex >= last)
+		{
+			ObjUpvalue upvalue = openUpvalues;
+			upvalue.closed = stack[upvalue.slotIndex];
+			upvalue.slotIndex = -1;
+			openUpvalues = upvalue.next;
+		}
+	}
+
 	ObjUpvalue captureUpvalue(int local)
 	{
+		ObjUpvalue? prevUpvalue = null;
+		ObjUpvalue? upvalue = this.openUpvalues;
+		while (upvalue != null && upvalue.slotIndex > local)
+		{
+			prevUpvalue = upvalue;
+			upvalue = upvalue.next;
+		}
+		if (upvalue != null && upvalue.slotIndex == local)
+		{
+			return upvalue;
+		}
 		ObjUpvalue createdUpvalue = new ObjUpvalue(local);
+		createdUpvalue.next = upvalue;
+		if (prevUpvalue == null)
+		{
+			openUpvalues = createdUpvalue;
+		}
+		else
+		{
+			prevUpvalue.next = createdUpvalue;
+		}
 		return createdUpvalue;
 	}
 

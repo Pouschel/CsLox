@@ -34,3 +34,8 @@ The commits are named following the chapters. After [chapter 23](http://crafting
 
 * The native function interface has no `argCount` parameter (we must make an argument copy from the stack, hence the count is obvious).
 
+### Chapter 25
+
+* The upvalue handling is a little different because of missing pointers
+
+
