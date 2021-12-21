@@ -1,7 +1,7 @@
 ﻿//#define DEBUG_TRACE_EXECUTION
 global using static CsLox.InterpretResult;
 using System.Diagnostics;
-
+using static CsLox.NativeFunctions;
 namespace CsLox;
 
 public enum InterpretResult
@@ -37,6 +37,7 @@ public class VM
 		globals = new();
 		frames = new();
 		this.tw = tw;
+		defineNative("clock", clock);
 	}
 
 	private void push(Value val)
@@ -263,12 +264,31 @@ public class VM
 			{
 				case OBJ_FUNCTION:
 					return call(AS_FUNCTION(callee), argCount);
+				case OBJ_NATIVE:
+					{
+						NativeFn native = AS_NATIVE(callee);
+						Value[] args = new Value[argCount];
+						for (int i = 0; i < argCount; i++)
+						{
+							args[i] = stack[stackTop - argCount + i];
+						}
+						Value result = native(args);
+						stackTop -= argCount + 1;
+						push(result);
+						return true;
+					}
 				default:
 					break; // Non-callable object type.
 			}
 		}
 		runtimeError("Can only call functions and classes.");
 		return false;
+	}
+	void defineNative(string name, NativeFn function)
+	{
+		var oname = new ObjString(name);
+		var ofun = OBJ_VAL(new ObjNative(function));
+		tableSet(globals, oname, ofun);
 	}
 	bool call(ObjFunction function, int argCount)
 	{
@@ -326,7 +346,7 @@ public class VM
 		{
 			CallFrame frame = frames[i];
 			ObjFunction function = frame.function!;
-			int instruction = frame.ip-1;
+			int instruction = frame.ip - 1;
 			tw.WriteLine($"[line {function.chunk.lines[instruction]}] in {function.NameOrScript}");
 		}
 	}

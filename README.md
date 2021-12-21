@@ -12,6 +12,7 @@ The commits are named following the chapters. After [chapter 23](http://crafting
 * The `initXXX()` are missing, initialisation is handled in constructors.
 * The `Value` union is simplified, containing only a `double` and an `object`; `bool` values are stored as doubles.
 * The pointers are replaced with indexes.
+* No deallocation code
 
 ### Chapter 15
 
@@ -28,3 +29,8 @@ The commits are named following the chapters. After [chapter 23](http://crafting
 ### Chapter 22
 
 * The original `Compiler` is here `CompilerState`, because I used `Compiler` previously.
+
+### Chapter 24
+
+* The native function interface has no `argCount` parameter (we must make an argument copy from the stack, hence the count is obvious).
+

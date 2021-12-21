@@ -7,3 +7,4 @@ var start = clock();
 print fib(35);
 print clock() - start;
 
+// After chapter 24: 5.358 s half the time of my python program

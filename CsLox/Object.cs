@@ -5,7 +5,8 @@ namespace CsLox;
 
 enum ObjType
 {
-	OBJ_FUNCTION, 
+	OBJ_FUNCTION,
+	OBJ_NATIVE,
 	OBJ_STRING,
 }
 
@@ -19,7 +20,7 @@ internal class Obj
 internal class ObjFunction : Obj
 {
 	public int arity;
-	public Chunk chunk;
+	public readonly Chunk chunk;
 	public ObjString name;
 
 	public ObjFunction()
@@ -41,8 +42,21 @@ internal class ObjFunction : Obj
 			return s;
 		}
 	}
-
 }
+
+delegate Value NativeFn(Value[] args);
+
+internal class ObjNative: Obj
+{
+	public readonly NativeFn function;
+
+	public ObjNative(NativeFn function)
+	{
+		this.type = OBJ_NATIVE;
+		this.function = function;
+	}
+}
+
 internal class ObjString : Obj, IEquatable<ObjString>
 {
 	public readonly string chars;
@@ -50,9 +64,9 @@ internal class ObjString : Obj, IEquatable<ObjString>
 
 	public ObjString(string v)
 	{
-		type = OBJ_STRING;
-		chars = v;
-		hash = v.GetHashCode();
+		this.type = OBJ_STRING;
+		this.chars = v;
+		this.hash = v.GetHashCode();
 	}
 
 	public bool Equals(ObjString? other)
@@ -72,9 +86,11 @@ static class ObjStatics
 {
 	public static ObjType OBJ_TYPE(Value value) => AS_OBJ(value).type;
 	public static bool IS_FUNCTION(Value value) => isObjType(value, OBJ_FUNCTION);
+	public static bool IS_NATIVE(Value value) => isObjType(value, OBJ_NATIVE);
 	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
 	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
 	public static ObjFunction AS_FUNCTION(Value value) => ((ObjFunction)AS_OBJ(value));
+	public static NativeFn AS_NATIVE(Value value) => ((ObjNative)AS_OBJ(value)).function;
 	public static string AS_CSTRING(Value value) => (((ObjString)AS_OBJ(value)).chars);
 
 	static bool isObjType(Value value, ObjType type)
