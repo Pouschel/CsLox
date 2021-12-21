@@ -91,16 +91,26 @@ class Chunk
 			case OP_DEFINE_GLOBAL:
 			case OP_GET_GLOBAL:
 			case OP_SET_GLOBAL:
-				var constant = code[offset + 1];
-				tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'",
-					instructionString, constant, constants[constant]));
-				return offset + 2;
+				{
+					var constant = code[offset + 1];
+					tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'",
+						instructionString, constant, constants[constant]));
+					return offset + 2;
+				}
 			case OP_GET_LOCAL:
 			case OP_SET_LOCAL:
 			case OP_CALL:
 				var slot = code[offset + 1];
 				tw.WriteLine($"{instructionString} {slot}");
 				return offset + 2;
+			case OP_CLOSURE:
+				{
+					offset++;
+					var constant = code[offset++];
+					tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'",
+						instructionString, constant, constants[constant]));
+					return offset;
+				}
 			case OP_JUMP:
 			case OP_JUMP_IF_FALSE:
 				return jumpInstruction(1);

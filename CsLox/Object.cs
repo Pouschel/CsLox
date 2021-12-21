@@ -5,16 +5,15 @@ namespace CsLox;
 
 enum ObjType
 {
+	OBJ_CLOSURE,
 	OBJ_FUNCTION,
 	OBJ_NATIVE,
 	OBJ_STRING,
 }
 
-
 internal class Obj
 {
 	public ObjType type;
-
 }
 
 internal class ObjFunction : Obj
@@ -46,7 +45,7 @@ internal class ObjFunction : Obj
 
 delegate Value NativeFn(Value[] args);
 
-internal class ObjNative: Obj
+internal class ObjNative : Obj
 {
 	public readonly NativeFn function;
 
@@ -85,13 +84,27 @@ internal class ObjString : Obj, IEquatable<ObjString>
 	public override string ToString() => chars;
 }
 
+class ObjClosure : Obj
+{
+	public ObjFunction function;
+
+	public ObjClosure(ObjFunction function)
+	{
+		this.function = function;
+	}
+
+	public override string ToString() => function.ToString();
+
+}
 static class ObjStatics
 {
 	public static ObjType OBJ_TYPE(Value value) => AS_OBJ(value).type;
+	public static bool IS_CLOSURE(Value value) => isObjType(value, OBJ_CLOSURE);
 	public static bool IS_FUNCTION(Value value) => isObjType(value, OBJ_FUNCTION);
 	public static bool IS_NATIVE(Value value) => isObjType(value, OBJ_NATIVE);
 	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
 	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
+	public static ObjClosure AS_CLOSURE(Value value) => ((ObjClosure)AS_OBJ(value));
 	public static ObjFunction AS_FUNCTION(Value value) => ((ObjFunction)AS_OBJ(value));
 	public static NativeFn AS_NATIVE(Value value) => ((ObjNative)AS_OBJ(value)).function;
 	public static string AS_CSTRING(Value value) => (((ObjString)AS_OBJ(value)).chars);

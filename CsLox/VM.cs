@@ -13,7 +13,7 @@ public enum InterpretResult
 
 class CallFrame
 {
-	public ObjFunction? function;
+	public ObjClosure? closure;
 	public int ip;
 	public int slotIndex;
 };
@@ -59,7 +59,7 @@ public class VM
 		return stack[stackTop - 1 - distance];
 	}
 
-	CallFrame CreateFrame(ObjFunction function, int argCount)
+	CallFrame CreateFrame(ObjClosure closure, int argCount)
 	{
 		CallFrame? frame = null;
 		if (frameCount < frames.Count)
@@ -68,15 +68,16 @@ public class VM
 			frame = new CallFrame();
 		if (frameCount++ >= frames.Count)
 			frames.Add(frame);
-		frame.function = function;
+		frame.closure = closure;
 		frame.ip = 0;
 		frame.slotIndex = stackTop - argCount;
 		return frame;
 	}
 	internal InterpretResult interpret(ObjFunction function)
 	{
-		push(OBJ_VAL(function));
-		call(function, 0);
+		var closure = new ObjClosure(function);
+		push(OBJ_VAL(closure));
+		call(closure, 0);
 		return run();
 	}
 
@@ -84,7 +85,7 @@ public class VM
 	{
 
 		CallFrame frame = frames[frameCount - 1];
-		Chunk chunk() => frame.function!.chunk;
+		Chunk chunk() => frame.closure!.function!.chunk;
 
 		byte READ_BYTE() => chunk().code[frame.ip++];
 		ushort READ_SHORT()
@@ -108,7 +109,7 @@ public class VM
 				Console.Write($"[{slot}]");
 			}
 			Console.WriteLine();
-			frame.function.chunk.disassembleInstruction(frame.ip, Console.Out);
+			frame.closure!.function.chunk.disassembleInstruction(frame.ip, Console.Out);
 #endif
 			var instruction = (OpCode)READ_BYTE();
 			switch (instruction)
@@ -142,30 +143,7 @@ public class VM
 						frame.ip -= offset;
 						break;
 					}
-				case OP_CALL:
-					{
-						int argCount = READ_BYTE();
-						if (!callValue(peek(argCount), argCount))
-						{
-							return INTERPRET_RUNTIME_ERROR;
-						}
-						frame = frames[frameCount - 1];
-						break;
-					}
-				case OP_RETURN:
-					{
-						Value result = pop();
-						frameCount--;
-						if (frameCount == 0)
-						{
-							pop();
-							return INTERPRET_OK;
-						}
-						stackTop = frame.slotIndex;
-						push(result);
-						frame = frames[frameCount - 1];
-						break;
-					}
+
 				case OP_PRINT:
 					tw.WriteLine(pop());
 					break;
@@ -250,6 +228,37 @@ public class VM
 				case OP_SUBTRACT: iresult = PopAndOp((a, b) => NUMBER_VAL(a - b)); break;
 				case OP_MULTIPLY: iresult = PopAndOp((a, b) => NUMBER_VAL(a * b)); break;
 				case OP_DIVIDE: iresult = PopAndOp((a, b) => NUMBER_VAL(a / b)); break;
+				case OP_CALL:
+					{
+						int argCount = READ_BYTE();
+						if (!callValue(peek(argCount), argCount))
+						{
+							return INTERPRET_RUNTIME_ERROR;
+						}
+						frame = frames[frameCount - 1];
+						break;
+					}
+				case OP_CLOSURE:
+					{
+						ObjFunction function = AS_FUNCTION(READ_CONSTANT());
+						ObjClosure closure = new ObjClosure(function);
+						push(OBJ_VAL(closure));
+						break;
+					}
+				case OP_RETURN:
+					{
+						Value result = pop();
+						frameCount--;
+						if (frameCount == 0)
+						{
+							pop();
+							return INTERPRET_OK;
+						}
+						stackTop = frame.slotIndex;
+						push(result);
+						frame = frames[frameCount - 1];
+						break;
+					}
 			}
 			if (iresult != INTERPRET_OK) return iresult;
 		}
@@ -262,8 +271,8 @@ public class VM
 		{
 			switch (OBJ_TYPE(callee))
 			{
-				case OBJ_FUNCTION:
-					return call(AS_FUNCTION(callee), argCount);
+				case OBJ_CLOSURE:
+					return call(AS_CLOSURE(callee), argCount);
 				case OBJ_NATIVE:
 					{
 						NativeFn native = AS_NATIVE(callee);
@@ -290,8 +299,9 @@ public class VM
 		var ofun = OBJ_VAL(new ObjNative(function));
 		tableSet(globals, oname, ofun);
 	}
-	bool call(ObjFunction function, int argCount)
+	bool call(ObjClosure closure, int argCount)
 	{
+		var function = closure.function;
 		if (argCount != function.arity)
 		{
 			runtimeError($"Expected {function.arity} arguments but got {argCount}.");
@@ -302,7 +312,7 @@ public class VM
 			runtimeError("Stack overflow.");
 			return false;
 		}
-		CreateFrame(function, argCount + 1);
+		CreateFrame(closure, argCount + 1);
 		return true;
 	}
 
@@ -330,7 +340,7 @@ public class VM
 	void runtimeError(string msg)
 	{
 		CallFrame frame = frames[frameCount - 1];
-		var chunk = frame.function!.chunk;
+		var chunk = frame.closure!.function.chunk;
 		int instruction = frame.ip - 1;
 		int line = chunk.lines[instruction];
 		var text = string.IsNullOrEmpty(chunk.FileName) ? msg : $"{chunk.FileName}({line}): {msg}";
@@ -345,7 +355,7 @@ public class VM
 		for (int i = frameCount - 1; i >= 0; i--)
 		{
 			CallFrame frame = frames[i];
-			ObjFunction function = frame.function!;
+			ObjFunction function = frame.closure!.function;
 			int instruction = frame.ip - 1;
 			tw.WriteLine($"[line {function.chunk.lines[instruction]}] in {function.NameOrScript}");
 		}

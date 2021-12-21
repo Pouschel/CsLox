@@ -74,9 +74,6 @@ class CompilerState
 internal class Compiler
 {
 	Scanner scanner;
-	Chunk rootChunk;
-	Chunk compilingChunk;
-	public Chunk CompiledChunk => rootChunk;
 	Parser parser;
 	CompilerState current;
 	string fileName;
@@ -146,8 +143,6 @@ internal class Compiler
 		this.fileName = fileName;
 		this.tw = tw;
 		scanner = new Scanner(source);
-		compilingChunk = rootChunk = new Chunk();
-		compilingChunk.FileName = fileName;
 		parser = new Parser();
 		current = initCompiler(TYPE_SCRIPT);
 	}
@@ -213,6 +208,7 @@ internal class Compiler
 	{
 		CompilerState compiler = new CompilerState(type);
 		compiler.enclosing = current;
+		compiler.function.chunk.FileName = fileName;
 		if (type != TYPE_SCRIPT)
 			compiler.function.name = new ObjString(parser.previous.StringValue);
 		return compiler;
@@ -241,7 +237,7 @@ internal class Compiler
 		block();
 
 		ObjFunction function = endCompiler();
-		emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
+		emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 	}
 	void call(bool canAssign)
 	{
