@@ -49,6 +49,7 @@ struct Local
 
 class CompilerState
 {
+	public CompilerState? enclosing;
 	public ObjFunction function;
 	public FunctionType type;
 	public Local[] locals = new Local[byte.MaxValue + 1];
@@ -65,8 +66,9 @@ class CompilerState
 		{
 			source = ""
 		};
-
 	}
+
+	public override string ToString() => $"{function.NameOrScript}[{function.arity}]";
 }
 
 internal class Compiler
@@ -147,7 +149,7 @@ internal class Compiler
 		compilingChunk = rootChunk = new Chunk();
 		compilingChunk.FileName = fileName;
 		parser = new Parser();
-		current = new CompilerState(FunctionType.TYPE_SCRIPT);
+		current = initCompiler(TYPE_SCRIPT);
 	}
 	public ObjFunction? compile()
 	{
@@ -162,7 +164,11 @@ internal class Compiler
 	}
 	void declaration()
 	{
-		if (match(TOKEN_VAR))
+		if (match(TOKEN_FUN))
+		{
+			funDeclaration();
+		}
+		else if (match(TOKEN_VAR))
 		{
 			varDeclaration();
 		}
@@ -194,6 +200,48 @@ internal class Compiler
 			}
 			advance();
 		}
+	}
+	void funDeclaration()
+	{
+		byte global = parseVariable("Expect function name.");
+		markInitialized();
+		function(TYPE_FUNCTION);
+		defineVariable(global);
+	}
+
+	CompilerState initCompiler(FunctionType type)
+	{
+		CompilerState compiler = new CompilerState(type);
+		compiler.enclosing = current;
+		if (type != TYPE_SCRIPT)
+			compiler.function.name = new ObjString(parser.previous.StringValue);
+		return compiler;
+	}
+	void function(FunctionType type)
+	{
+		current = initCompiler(type);
+		beginScope();
+
+		consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
+		if (!check(TOKEN_RIGHT_PAREN))
+		{
+			do
+			{
+				current.function.arity++;
+				if (current.function.arity > 255)
+				{
+					errorAtCurrent("Can't have more than 255 parameters.");
+				}
+				byte constant = parseVariable("Expect parameter name.");
+				defineVariable(constant);
+			} while (match(TOKEN_COMMA));
+		}
+		consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
+		consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
+		block();
+
+		ObjFunction function = endCompiler();
+		emitBytes(OP_CONSTANT, makeConstant(OBJ_VAL(function)));
 	}
 	void varDeclaration()
 	{
@@ -618,6 +666,7 @@ internal class Compiler
 				currentChunk().disassemble(function.NameOrScript);
 			}
 		}
+		current = current.enclosing!;
 		return function;
 	}
 
@@ -665,12 +714,11 @@ internal class Compiler
 		}
 		emitBytes(OP_DEFINE_GLOBAL, global);
 	}
-
 	void markInitialized()
 	{
+		if (current.scopeDepth == 0) return;
 		current.locals[current.localCount - 1].depth = current.scopeDepth;
 	}
-
 	void declareVariable()
 	{
 		if (current.scopeDepth == 0) return;

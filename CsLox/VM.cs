@@ -13,7 +13,7 @@ public enum InterpretResult
 
 class CallFrame
 {
-	public ObjFunction function;
+	public ObjFunction? function;
 	public int ip;
 	public int slotIndex;
 };
@@ -77,7 +77,7 @@ public class VM
 	{
 
 		CallFrame frame = frames[frameCount - 1];
-		var chunk = frame.function.chunk;
+		var chunk = frame.function!.chunk;
 
 		byte READ_BYTE() => chunk.code[frame.ip++];
 		ushort READ_SHORT()
@@ -247,7 +247,7 @@ public class VM
 	void runtimeError(string msg)
 	{
 		CallFrame frame = frames[frameCount - 1];
-		var chunk = frame.function.chunk;
+		var chunk = frame.function!.chunk;
 		int instruction = frame.ip - 1;
 		int line = chunk.lines[instruction];
 		var text = string.IsNullOrEmpty(chunk.FileName) ? msg : $"{chunk.FileName}({line}): {msg}";
