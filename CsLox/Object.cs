@@ -9,6 +9,7 @@ enum ObjType
 	OBJ_FUNCTION,
 	OBJ_NATIVE,
 	OBJ_STRING,
+	OBJ_UPVALUE,
 }
 
 internal class Obj
@@ -85,13 +86,29 @@ internal class ObjString : Obj, IEquatable<ObjString>
 	public override string ToString() => chars;
 }
 
+class ObjUpvalue : Obj
+{
+	public int slotIndex;
+
+	public ObjUpvalue(int local)
+	{
+		this.slotIndex = local;
+	}
+
+	public override string ToString() => "upvalue";
+}
+
+
 class ObjClosure : Obj
 {
 	public ObjFunction function;
-
+	public ObjUpvalue[] upvalues;
+	public int upvalueCount;
 	public ObjClosure(ObjFunction function)
 	{
 		this.function = function;
+		this.upvalueCount = function.upvalueCount; 
+		upvalues = new ObjUpvalue[function.upvalueCount];
 	}
 
 	public override string ToString() => function.ToString();

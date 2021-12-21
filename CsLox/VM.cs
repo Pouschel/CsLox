@@ -18,7 +18,6 @@ class CallFrame
 	public int slotIndex;
 };
 
-
 public class VM
 {
 	public int FRAMES_MAX = 1000;
@@ -197,6 +196,20 @@ public class VM
 						}
 						break;
 					}
+				case OP_GET_UPVALUE:
+					{
+						byte slot = READ_BYTE();
+						int slotIndex = frame.closure!.upvalues[slot].slotIndex;
+						push(stack[slotIndex]);
+						break;
+					}
+				case OP_SET_UPVALUE:
+					{
+						byte slot = READ_BYTE();
+						int slotIndex = frame.closure!.upvalues[slot].slotIndex;
+						stack[slotIndex] = peek(0);
+						break;
+					}
 				case OP_EQUAL:
 					{
 						Value b = pop();
@@ -243,6 +256,19 @@ public class VM
 						ObjFunction function = AS_FUNCTION(READ_CONSTANT());
 						ObjClosure closure = new ObjClosure(function);
 						push(OBJ_VAL(closure));
+						for (int i = 0; i < closure.upvalueCount; i++)
+						{
+							byte isLocal = READ_BYTE();
+							byte index = READ_BYTE();
+							if (isLocal != 0)
+							{
+								closure.upvalues[i] = captureUpvalue(frame.slotIndex + index);
+							}
+							else
+							{
+								closure.upvalues[i] = frame.closure!.upvalues[index];
+							}
+						}
 						break;
 					}
 				case OP_RETURN:
@@ -262,7 +288,12 @@ public class VM
 			}
 			if (iresult != INTERPRET_OK) return iresult;
 		}
+	}
 
+	ObjUpvalue captureUpvalue(int local)
+	{
+		ObjUpvalue createdUpvalue = new ObjUpvalue(local);
+		return createdUpvalue;
 	}
 
 	bool callValue(Value callee, int argCount)
