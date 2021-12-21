@@ -29,6 +29,7 @@ public class VM
 	int frameCount;
 	Table globals;
 	TextWriter tw;
+	ObjString initString;
 	ObjUpvalue? openUpvalues;
 
 	internal VM(TextWriter tw)
@@ -37,6 +38,7 @@ public class VM
 		globals = new();
 		frames = new();
 		this.tw = tw;
+		initString = new ObjString("init");
 		defineNative("clock", clock);
 	}
 
@@ -401,6 +403,16 @@ public class VM
 					{
 						ObjClass klass = AS_CLASS(callee);
 						stack[stackTop - argCount - 1] = OBJ_VAL(new ObjInstance(klass));
+						Value initializer;
+						if (tableGet(klass.methods, initString, out initializer))
+						{
+							return call(AS_CLOSURE(initializer), argCount);
+						}
+						else if (argCount != 0)
+						{
+							runtimeError($"Expected 0 arguments but got {argCount}.");
+							return false;
+						}
 						return true;
 					}
 				case OBJ_CLOSURE:

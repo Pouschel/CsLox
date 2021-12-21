@@ -21,6 +21,7 @@ enum Precedence
 enum FunctionType
 {
 	TYPE_FUNCTION,
+	TYPE_INITIALIZER,
 	TYPE_METHOD,
 	TYPE_SCRIPT
 }
@@ -291,6 +292,10 @@ internal class Compiler
 		consume(TOKEN_IDENTIFIER, "Expect method name.");
 		byte constant = identifierConstant(parser.previous);
 		FunctionType type = TYPE_METHOD;
+		if (parser.previous.StringValue== "init")
+		{
+			type = TYPE_INITIALIZER;
+		}
 		function(type);
 		emitBytes(OP_METHOD, constant);
 	}
@@ -407,6 +412,10 @@ internal class Compiler
 		}
 		else
 		{
+			if (current.type == TYPE_INITIALIZER)
+			{
+				error("Can't return a value from an initializer.");
+			}
 			expression();
 			consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
 			emitByte(OP_RETURN);
@@ -837,7 +846,14 @@ internal class Compiler
 
 	void emitReturn()
 	{
-		emitByte(OP_NIL);
+		if (current.type == TYPE_INITIALIZER)
+		{
+			emitBytes(OP_GET_LOCAL, 0);
+		}
+		else
+		{
+			emitByte(OP_NIL);
+		}
 		emitByte(OP_RETURN);
 	}
 
