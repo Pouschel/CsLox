@@ -110,6 +110,13 @@ class Chunk
 				var slot = code[offset + 1];
 				tw.WriteLine($"{instructionString} {slot}");
 				return offset + 2;
+			case OP_INVOKE:
+				{
+					byte constant = code[offset + 1];
+					byte argCount = code[offset + 2];
+					tw.WriteLine($"{instructionString} ({argCount} args){constants[constant]} {argCount}");
+					return offset + 3;
+				}
 			case OP_CLOSURE:
 				{
 					offset++;

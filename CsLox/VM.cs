@@ -294,6 +294,17 @@ public class VM
 						frame = frames[frameCount - 1];
 						break;
 					}
+				case OP_INVOKE:
+					{
+						ObjString method = READ_STRING();
+						int argCount = READ_BYTE();
+						if (!invoke(method, argCount))
+						{
+							return INTERPRET_RUNTIME_ERROR;
+						}
+						frame = frames[frameCount - 1];
+						break;
+					}
 				case OP_CLOSURE:
 					{
 						ObjFunction function = AS_FUNCTION(READ_CONSTANT());
@@ -386,7 +397,6 @@ public class VM
 		}
 		return createdUpvalue;
 	}
-
 	bool callValue(Value callee, int argCount)
 	{
 		if (IS_OBJ(callee))
@@ -436,6 +446,33 @@ public class VM
 		}
 		runtimeError("Can only call functions and classes.");
 		return false;
+	}
+	bool invokeFromClass(ObjClass klass, ObjString name, int argCount)
+	{
+		Value method;
+		if (!tableGet(klass.methods, name, out method))
+		{
+			runtimeError($"Undefined property '{name.chars}'.");
+			return false;
+		}
+		return call(AS_CLOSURE(method), argCount);
+	}
+	bool invoke(ObjString name, int argCount)
+	{
+		Value receiver = peek(argCount);
+		if (!IS_INSTANCE(receiver))
+		{
+			runtimeError("Only instances have methods.");
+			return false;
+		}
+		ObjInstance instance = AS_INSTANCE(receiver);
+		Value value;
+		if (tableGet(instance.fields, name, out value))
+		{
+			stack[stackTop -argCount - 1] = value;
+			return callValue(value, argCount);
+		}
+		return invokeFromClass(instance.klass, name, argCount);
 	}
 	bool bindMethod(ObjClass klass, ObjString name)
 	{
