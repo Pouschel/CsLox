@@ -331,6 +331,9 @@ public class VM
 				case OP_CLASS:
 					push(OBJ_VAL(new ObjClass(READ_STRING())));
 					break;
+				case OP_METHOD:
+					defineMethod(READ_STRING());
+					break;
 			}
 			if (iresult != INTERPRET_OK) return iresult;
 		}
@@ -346,7 +349,13 @@ public class VM
 			openUpvalues = upvalue.next;
 		}
 	}
-
+	void defineMethod(ObjString name)
+	{
+		Value method = peek(0);
+		ObjClass klass = AS_CLASS(peek(1));
+		tableSet(klass.methods, name, method);
+		pop();
+	}
 	ObjUpvalue captureUpvalue(int local)
 	{
 		ObjUpvalue? prevUpvalue = null;

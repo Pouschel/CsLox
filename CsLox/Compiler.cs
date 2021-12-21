@@ -189,12 +189,19 @@ internal class Compiler
 	void classDeclaration()
 	{
 		consume(TOKEN_IDENTIFIER, "Expect class name.");
+		Token className = parser.previous;
 		byte nameConstant = identifierConstant(parser.previous);
 		declareVariable();
 		emitBytes(OP_CLASS, nameConstant);
 		defineVariable(nameConstant);
+		namedVariable(className, false);
 		consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+		while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
+		{
+			method();
+		}
 		consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+		emitByte(OP_POP);
 	}
 
 	void synchronize()
@@ -268,6 +275,14 @@ internal class Compiler
 			emitByte((byte) (compiler.upvalues[i].isLocal ? 1 : 0));
 			emitByte(compiler.upvalues[i].index);
 		}
+	}
+	void method()
+	{
+		consume(TOKEN_IDENTIFIER, "Expect method name.");
+		byte constant = identifierConstant(parser.previous);
+		FunctionType type = TYPE_FUNCTION;
+		function(type);
+		emitBytes(OP_METHOD, constant);
 	}
 	void call(bool canAssign)
 	{

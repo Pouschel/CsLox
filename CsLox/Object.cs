@@ -126,11 +126,13 @@ class ObjClosure : Obj
 class ObjClass: Obj
 {
 	public ObjString name;
+	public Table methods;
 
 	public ObjClass(ObjString name)
 	{
 		this.type = OBJ_CLASS;
 		this.name = name;
+		this.methods = new Table();
 	}
 
 	public override string ToString() => name.chars;

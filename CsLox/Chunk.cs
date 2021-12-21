@@ -95,6 +95,7 @@ class Chunk
 			case OP_CLASS:
 			case OP_GET_PROPERTY:
 			case OP_SET_PROPERTY:
+			case OP_METHOD:
 				{
 					var constant = code[offset + 1];
 					tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'",
