@@ -99,6 +99,8 @@ class Chunk
 				}
 			case OP_GET_LOCAL:
 			case OP_SET_LOCAL:
+			case OP_GET_UPVALUE:
+			case OP_SET_UPVALUE:
 			case OP_CALL:
 				var slot = code[offset + 1];
 				tw.WriteLine($"{instructionString} {slot}");
@@ -109,6 +111,14 @@ class Chunk
 					var constant = code[offset++];
 					tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'",
 						instructionString, constant, constants[constant]));
+					ObjFunction function = AS_FUNCTION(constants[constant]);
+					for (int j = 0; j < function.upvalueCount; j++)
+					{
+						int isLocal = code[offset++];
+						int index = code[offset++];
+						tw.WriteLine("{0:0000}    |                     {1} {2}",
+									 offset - 2, isLocal !=0 ? "local" : "upvalue", index);
+					}
 					return offset;
 				}
 			case OP_JUMP:

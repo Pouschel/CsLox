@@ -47,13 +47,20 @@ struct Local
 	public int depth;
 }
 
+struct Upvalue
+{
+	public byte index;
+	public bool isLocal;
+} 
+
 class CompilerState
 {
 	public CompilerState? enclosing;
 	public ObjFunction function;
 	public FunctionType type;
-	public Local[] locals = new Local[byte.MaxValue + 1];
+	public Local[] locals = new Local[UINT8_COUNT];
 	public int localCount;
+	public Upvalue[] upvalues = new Upvalue[UINT8_COUNT];
 	public int scopeDepth;
 
 	public CompilerState(FunctionType type)
@@ -215,7 +222,8 @@ internal class Compiler
 	}
 	void function(FunctionType type)
 	{
-		current = initCompiler(type);
+		var compiler = initCompiler(type);
+		current = compiler;
 		beginScope();
 
 		consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
@@ -223,8 +231,8 @@ internal class Compiler
 		{
 			do
 			{
-				current.function.arity++;
-				if (current.function.arity > 255)
+				compiler.function.arity++;
+				if (compiler.function.arity > 255)
 				{
 					errorAtCurrent("Can't have more than 255 parameters.");
 				}
@@ -238,6 +246,11 @@ internal class Compiler
 
 		ObjFunction function = endCompiler();
 		emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
+		for (int i = 0; i < function.upvalueCount; i++)
+		{
+			emitByte((byte) (compiler.upvalues[i].isLocal ? 1 : 0));
+			emitByte(compiler.upvalues[i].index);
+		}
 	}
 	void call(bool canAssign)
 	{
@@ -614,6 +627,11 @@ internal class Compiler
 			getOp = OP_GET_LOCAL;
 			setOp = OP_SET_LOCAL;
 		}
+		else if ((arg = resolveUpvalue(current, name)) != -1)
+		{
+			getOp = OP_GET_UPVALUE;
+			setOp = OP_SET_UPVALUE;
+		}
 		else
 		{
 			arg = identifierConstant(name);
@@ -630,7 +648,41 @@ internal class Compiler
 			emitBytes(getOp, (byte)arg);
 		}
 	}
-
+	int resolveUpvalue(CompilerState compiler, Token name)
+	{
+		if (compiler.enclosing == null) return -1;
+		int local = resolveLocal(compiler.enclosing, name);
+		if (local != -1)
+		{
+			return addUpvalue(compiler, (byte)local, true);
+		}
+		int upvalue = resolveUpvalue(compiler.enclosing, name);
+		if (upvalue != -1)
+		{
+			return addUpvalue(compiler, (byte)upvalue, false);
+		}
+		return -1;
+	}
+	int addUpvalue(CompilerState compiler, byte index, bool isLocal)
+	{
+		int upvalueCount = compiler.function.upvalueCount;
+		for (int i = 0; i < upvalueCount; i++)
+		{
+			Upvalue upvalue = compiler.upvalues[i];
+			if (upvalue.index == index && upvalue.isLocal == isLocal)
+			{
+				return i;
+			}
+		}
+		if (upvalueCount == UINT8_COUNT)
+		{
+			error("Too many closure variables in function.");
+			return 0;
+		}
+		compiler.upvalues[upvalueCount].isLocal = isLocal;
+		compiler.upvalues[upvalueCount].index = index;
+		return compiler.function.upvalueCount++;
+	}
 	int resolveLocal(CompilerState compiler, Token name)
 	{
 		for (int i = compiler.localCount - 1; i >= 0; i--)

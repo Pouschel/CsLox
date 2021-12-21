@@ -38,7 +38,7 @@ internal struct Token
 
 	public ObjString StringStringValue => new ObjString(source[(start + 1)..(end - 1)]);
 
-
+	public override string ToString() => $"{type}: {StringValue}";
 
 }
 

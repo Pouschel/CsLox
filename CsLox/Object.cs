@@ -20,6 +20,7 @@ internal class ObjFunction : Obj
 {
 	public int arity;
 	public readonly Chunk chunk;
+	public int upvalueCount;
 	public ObjString name;
 
 	public ObjFunction()

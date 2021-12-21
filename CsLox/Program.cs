@@ -33,7 +33,7 @@ class Program
 
 public class Globals
 {
-
+	internal const int UINT8_COUNT = 256;
 	internal static bool identifiersEqual(in Token a, in Token b)
 		=> a.StringValue == b.StringValue;
 
