@@ -92,6 +92,7 @@ class Chunk
 			case OP_DEFINE_GLOBAL:
 			case OP_GET_GLOBAL:
 			case OP_SET_GLOBAL:
+			case OP_CLASS:
 				{
 					var constant = code[offset + 1];
 					tw.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1,4} '{2}'",

@@ -167,7 +167,11 @@ internal class Compiler
 	}
 	void declaration()
 	{
-		if (match(TOKEN_FUN))
+		if (match(TOKEN_CLASS))
+		{
+			classDeclaration();
+		}
+		else if(match(TOKEN_FUN))
 		{
 			funDeclaration();
 		}
@@ -181,6 +185,18 @@ internal class Compiler
 		}
 		if (parser.panicMode) synchronize();
 	}
+
+	void classDeclaration()
+	{
+		consume(TOKEN_IDENTIFIER, "Expect class name.");
+		byte nameConstant = identifierConstant(parser.previous);
+		declareVariable();
+		emitBytes(OP_CLASS, nameConstant);
+		defineVariable(nameConstant);
+		consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
+		consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
+	}
+
 	void synchronize()
 	{
 		parser.panicMode = false;

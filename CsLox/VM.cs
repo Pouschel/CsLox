@@ -294,6 +294,9 @@ public class VM
 						frame = frames[frameCount - 1];
 						break;
 					}
+				case OP_CLASS:
+					push(OBJ_VAL(new ObjClass(READ_STRING())));
+					break;
 			}
 			if (iresult != INTERPRET_OK) return iresult;
 		}
