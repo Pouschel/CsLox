@@ -23,9 +23,9 @@ public class VM
 	public int FRAMES_MAX = 1000;
 	public bool DumpStackOnError = true;
 
-	List<Value> stack;
+	Value[] stack;
 	int stackTop;
-	List<CallFrame> frames;
+	CallFrame[] frames;
 	int frameCount;
 	Table globals;
 	TextWriter tw;
@@ -34,9 +34,10 @@ public class VM
 
 	internal VM(TextWriter tw)
 	{
-		stack = new(); stackTop = 0;
+		stack = new Value[1000]; 
+		stackTop = 0;
 		globals = new();
-		frames = new();
+		frames = new CallFrame[100];
 		this.tw = tw;
 		initString = new ObjString("init");
 		defineNative("clock", clock);
@@ -44,10 +45,9 @@ public class VM
 
 	private void push(Value val)
 	{
-		if (stackTop == stack.Count)
-			stack.Add(val);
-		else
-			stack[stackTop] = val;
+		if (stackTop == stack.Length)
+			ExpandArray(ref stack);
+		stack[stackTop] = val;
 		stackTop++;
 	}
 
@@ -63,13 +63,14 @@ public class VM
 
 	CallFrame CreateFrame(ObjClosure closure, int argCount)
 	{
-		CallFrame? frame = null;
-		if (frameCount < frames.Count)
-			frame = frames[frameCount];
+		if (frameCount >= frames.Length)
+			ExpandArray(ref frames);
+		var frame = frames[frameCount++];
 		if (frame == null)
+		{
 			frame = new CallFrame();
-		if (frameCount++ >= frames.Count)
-			frames.Add(frame);
+			frames[frameCount - 1] = frame;
+		}
 		frame.closure = closure;
 		frame.ip = 0;
 		frame.slotIndex = stackTop - argCount;
@@ -85,7 +86,6 @@ public class VM
 
 	public InterpretResult run()
 	{
-
 		CallFrame frame = frames[frameCount - 1];
 		Chunk chunk() => frame.closure!.function!.chunk;
 
@@ -590,7 +590,7 @@ public class VM
 
 	void resetStack()
 	{
-		stack.Clear();
+		stackTop = 0;
 	}
 }
 

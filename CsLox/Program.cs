@@ -73,5 +73,12 @@ public class Globals
 		return result == INTERPRET_OK;
 	}
 
-
+	internal static void ExpandArray<T>(ref T[] array)
+	{
+		int len = array.Length;
+		int newLen = len * 3 / 2;
+		var newArray = new T[newLen];
+		Array.Copy(array, newArray, len);
+		array = newArray;
+	}
 }

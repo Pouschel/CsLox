@@ -10,3 +10,16 @@ trees             : 17,257 ms
 zoo               :  2,364 ms
 zoo_batch         : 10,007 ms
             Total :   73.3 s
+//List to array in VM
+--- 12/22/2021 12:04:46 ---
+binary_trees      :  8,136 ms
+equality          : 17,776 ms
+fib               :  6,011 ms
+instantiation     :  1,776 ms
+invocation        :  1,957 ms
+method_call       :  1,364 ms
+properties        :  2,793 ms
+trees             : 15,122 ms
+zoo               :  2,192 ms
+zoo_batch         : 10,003 ms
+            Total :   67.1 s
