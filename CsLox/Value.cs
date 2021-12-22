@@ -69,8 +69,10 @@ static class ValueStatics
 	public static Value OBJ_VAL(string value) => new(value);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static Obj AS_OBJ(Value value) => (Obj) value.oValue; 
+	public static Obj AS_OBJ(Value value) => (Obj) value.oValue;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool AS_BOOL( Value value) => value.dValue != 0;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] 
 	public static double AS_NUMBER( Value value) => value.dValue;
 
 	public static bool IS_BOOL( Value value) => value.type == VAL_BOOL;

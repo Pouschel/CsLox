@@ -44,23 +44,18 @@ public class VM
 		defineNative("clock", clock);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void push(Value val)
 	{
 		if (stackTop == stack.Length)
 			ExpandArray(ref stack);
-		stack[stackTop] = val;
-		stackTop++;
+		stack[stackTop++] = val;
 	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private Value pop() => stack[--stackTop];
 
-	private Value pop()
-	{
-		var ret = stack[--stackTop];
-		return ret;
-	}
-	Value peek(int distance)
-	{
-		return stack[stackTop - 1 - distance];
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	Value peek(int distance) => stack[stackTop - 1 - distance];
 
 	CallFrame CreateFrame(ObjClosure closure, int argCount)
 	{
