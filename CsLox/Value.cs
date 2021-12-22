@@ -11,8 +11,6 @@ enum ValueType
 	VAL_NUMBER,
 	VAL_OBJ
 }
-
-
 struct Value
 {
 	static object DummyObject = new ();
@@ -39,10 +37,10 @@ struct Value
 	{
 		switch (type)
 		{
-			case ValueType.VAL_NIL: return "nil";
-			case ValueType.VAL_BOOL: return dValue != 0 ? "true" : "false";
-			case ValueType.VAL_NUMBER: return dValue.ToString(CultureInfo.InvariantCulture);
-			case ValueType.VAL_OBJ: return oValue.ToString()!;
+			case VAL_NIL: return "nil";
+			case VAL_BOOL: return dValue != 0 ? "true" : "false";
+			case VAL_NUMBER: return dValue.ToString(CultureInfo.InvariantCulture);
+			case VAL_OBJ: return oValue.ToString()!;
 			default: return $"invalid value type {type}";
 		}
 	}
@@ -52,8 +50,8 @@ static class ValueStatics
 {
 	public static Value BOOL_VAL(bool value) => new(VAL_BOOL, value ? 1 : 0);
 	public static readonly Value NIL_VAL = new(VAL_NIL, 0);
-	public static Value NUMBER_VAL(double value) => new(ValueType.VAL_NUMBER, value);
-	public static Value OBJ_VAL(Obj value) => new(ValueType.VAL_OBJ, value);
+	public static Value NUMBER_VAL(double value) => new(VAL_NUMBER, value);
+	public static Value OBJ_VAL(Obj value) => new(VAL_OBJ, value);
 
 	public static Obj AS_OBJ(Value value) => (Obj) value.oValue; 
 	public static bool AS_BOOL( Value value) => value.dValue != 0;

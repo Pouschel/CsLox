@@ -133,7 +133,7 @@ internal class Compiler
 		SetRule(TOKEN_OR, null, or_, PREC_OR);
 		SetRule(TOKEN_PRINT, null, null, PREC_NONE);
 		SetRule(TOKEN_RETURN, null, null, PREC_NONE);
-		SetRule(TOKEN_SUPER, null, null, PREC_NONE);
+		SetRule(TOKEN_SUPER, super_, null, PREC_NONE);
 		SetRule(TOKEN_THIS, this_, null, PREC_NONE);
 		SetRule(TOKEN_TRUE, literal, null, PREC_NONE);
 		SetRule(TOKEN_VAR, null, null, PREC_NONE);
@@ -215,7 +215,7 @@ internal class Compiler
 				error("A class can't inherit from itself.");
 			}
 			beginScope();
-			addLocal("super");
+			addLocal(syntheticToken("super"));
 			defineVariable(0);
 			namedVariable(className, false);
 			emitByte(OP_INHERIT);
@@ -726,6 +726,33 @@ internal class Compiler
 		}
 		variable(false);
 	}
+	void super_(bool canAssign)
+	{
+		if (currentClass == null)
+		{
+			error("Can't use 'super' outside of a class.");
+		}
+		else if (!currentClass.hasSuperclass)
+		{
+			error("Can't use 'super' in a class with no superclass.");
+		}
+		consume(TOKEN_DOT, "Expect '.' after 'super'.");
+		consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
+		byte name = identifierConstant(parser.previous);
+		namedVariable(syntheticToken("this"), false);
+		if (match(TOKEN_LEFT_PAREN))
+		{
+			byte argCount = argumentList();
+			namedVariable(syntheticToken("super"), false);
+			emitBytes(OP_SUPER_INVOKE, name);
+			emitByte(argCount);
+		}
+		else
+		{
+			namedVariable(syntheticToken("super"), false);
+			emitBytes(OP_GET_SUPER, name);
+		}
+	}
 	void namedVariable(Token name, bool canAssign)
 	{
 		OpCode getOp, setOp;
@@ -948,10 +975,7 @@ internal class Compiler
 		}
 		addLocal(name);
 	}
-
-	void addLocal(Token name) => addLocal(name.StringValue);
-
-	void addLocal(string name)
+	void addLocal(Token name)
 	{
 		if (current.localCount >= current.locals.Length)
 		{
@@ -959,10 +983,17 @@ internal class Compiler
 			return;
 		}
 		ref Local local = ref current.locals[current.localCount++];
-		local.name = name;
+		local.name = name.StringValue;
 		local.depth = -1;
 		local.isCaptured = false;
 	}
-
+	static Token syntheticToken(string text)
+	{
+		return new()
+		{
+			source = text,
+			end = text.Length,
+		};
+	}
 }
 

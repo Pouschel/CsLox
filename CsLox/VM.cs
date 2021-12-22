@@ -225,7 +225,6 @@ public class VM
 						}
 						ObjInstance instance = AS_INSTANCE(peek(0));
 						ObjString name = READ_STRING();
-
 						Value value;
 						if (tableGet(instance.fields, name, out value))
 						{
@@ -251,6 +250,16 @@ public class VM
 						Value value = pop();
 						pop();
 						push(value);
+						break;
+					}
+				case OP_GET_SUPER:
+					{
+						ObjString name = READ_STRING();
+						ObjClass superclass = AS_CLASS(pop());
+						if (!bindMethod(superclass, name))
+						{
+							return INTERPRET_RUNTIME_ERROR;
+						}
 						break;
 					}
 				case OP_EQUAL:
@@ -323,6 +332,18 @@ public class VM
 								closure.upvalues[i] = frame.closure!.upvalues[index];
 							}
 						}
+						break;
+					}
+				case OP_SUPER_INVOKE:
+					{
+						ObjString method = READ_STRING();
+						int argCount = READ_BYTE();
+						ObjClass superclass = AS_CLASS(pop());
+						if (!invokeFromClass(superclass, method, argCount))
+						{
+							return INTERPRET_RUNTIME_ERROR;
+						}
+						frame = frames[frameCount - 1];
 						break;
 					}
 				case OP_CLOSE_UPVALUE:
