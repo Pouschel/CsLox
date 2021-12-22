@@ -4,31 +4,24 @@ namespace CsLox;
 class Chunk
 {
 	internal byte[] code;
-	int capacity;
 	public int count;
-	internal ValueArray constants;
+	internal Value[] constants;
+	int consCount;
 	internal List<int> lines;
 
 	public string FileName = "";
 
 	public Chunk()
 	{
-		capacity = 8;
-		code = new byte[capacity];
-		constants = new ValueArray();
+		code = new byte[8];
+		constants = new Value[4];
 		lines = new();
 	}
 
 	public void write(byte by, int line = 0)
 	{
-		if (capacity < count + 1)
-		{
-			int oldCapacity = capacity;
-			capacity *= 2;
-			var oldCode = code;
-			code = new byte[capacity];
-			Array.Copy(oldCode, code, oldCapacity);
-		}
+		if (count >= code.Length)
+			ExpandArray(ref code);
 		code[count++] = by;
 		lines.Add(line);
 	}
@@ -44,8 +37,15 @@ class Chunk
 
 	public int addConstant(Value value)
 	{
-		constants.write(value);
-		return constants.Count - 1;
+		for (int i = 0; i < consCount; i++)
+		{
+			if (valuesEqual(constants[i], value))
+				return i;
+		}
+		if (consCount >= constants.Length)
+			ExpandArray(ref constants);
+		constants[consCount++] = value;
+		return consCount - 1;
 	}
 
 	public void disassemble(string name, TextWriter? tw = null)

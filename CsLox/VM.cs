@@ -1,6 +1,7 @@
 ﻿//#define DEBUG_TRACE_EXECUTION
 global using static CsLox.InterpretResult;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using static CsLox.NativeFunctions;
 namespace CsLox;
 
@@ -87,15 +88,24 @@ public class VM
 	public InterpretResult run()
 	{
 		CallFrame frame = frames[frameCount - 1];
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		Chunk chunk() => frame.closure!.function!.chunk;
-
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		byte READ_BYTE() => chunk().code[frame.ip++];
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		ushort READ_SHORT()
 		{
 			frame.ip += 2;
 			return (ushort)((chunk().code[frame.ip - 2] << 8) | chunk().code[frame.ip - 1]);
 		}
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		Value READ_CONSTANT() => chunk().constants[READ_BYTE()];
+		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
 
 		InterpretResult iresult = INTERPRET_OK;

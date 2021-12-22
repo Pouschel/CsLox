@@ -1,5 +1,6 @@
 ﻿global using static CsLox.ObjType;
 global using static CsLox.ObjStatics;
+using System.Runtime.CompilerServices;
 
 namespace CsLox;
 
@@ -178,18 +179,28 @@ static class ObjStatics
 	public static bool IS_CLASS(Value value) => isObjType(value, OBJ_CLASS);
 	public static bool IS_CLOSURE(Value value) => isObjType(value, OBJ_CLOSURE);
 	public static bool IS_FUNCTION(Value value) => isObjType(value, OBJ_FUNCTION);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IS_INSTANCE(Value value) => isObjType(value, OBJ_INSTANCE);
 	public static bool IS_NATIVE(Value value) => isObjType(value, OBJ_NATIVE);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] 
 	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] 
 	public static ObjClosure AS_CLOSURE(Value value) => ((ObjClosure)AS_OBJ(value));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ObjBoundMethod AS_BOUND_METHOD(Value value) => ((ObjBoundMethod)AS_OBJ(value));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ObjClass AS_CLASS(Value value) => ((ObjClass)AS_OBJ(value));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ObjFunction AS_FUNCTION(Value value) => ((ObjFunction)AS_OBJ(value));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ObjInstance AS_INSTANCE(Value value) => ((ObjInstance)AS_OBJ(value));
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static NativeFn AS_NATIVE(Value value) => ((ObjNative)AS_OBJ(value)).function;
 	public static string AS_CSTRING(Value value) => (((ObjString)AS_OBJ(value)).chars);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	static bool isObjType(Value value, ObjType type)
 	{
 		return IS_OBJ(value) && AS_OBJ(value).type == type;

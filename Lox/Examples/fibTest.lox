@@ -7,4 +7,7 @@ var start = clock();
 print fib(35);
 print clock() - start;
 
-// After chapter 24: 5.358 s half the time of my python program
+// Python needs 2.804 s
+// After chapter 24: 5.358 s double the time of my python program
+// After some optimizations at the end: 5.002 s
+

@@ -1,6 +1,7 @@
 ﻿global using static CsLox.ValueType;
 global using static CsLox.ValueStatics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace CsLox;
 
@@ -48,11 +49,15 @@ struct Value
 
 static class ValueStatics
 {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Value BOOL_VAL(bool value) => new(VAL_BOOL, value ? 1 : 0);
 	public static readonly Value NIL_VAL = new(VAL_NIL, 0);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Value NUMBER_VAL(double value) => new(VAL_NUMBER, value);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Value OBJ_VAL(Obj value) => new(VAL_OBJ, value);
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Obj AS_OBJ(Value value) => (Obj) value.oValue; 
 	public static bool AS_BOOL( Value value) => value.dValue != 0;
 	public static double AS_NUMBER( Value value) => value.dValue;
