@@ -6,7 +6,7 @@
   "configurations": [
 
     {
-      "name": ".NET Core Launch (console)",
+      "name": "csLox Debug",
       "type": "coreclr",
       "request": "launch",
       "program": "C:/Code/CsLox/CsLox/bin/Debug/net6.0/csLox.dll",
@@ -14,16 +14,18 @@
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
       "console": "internalConsole"
-    },    {
-      "name": "(Windows) Starten",
-      "type": "cppvsdbg",
+    }
+,
+    {
+      "name": "csLox Release",
+      "type": "coreclr",
       "request": "launch",
-      "program": "C:/Code/CsLox/CsLox/bin/Debug/net6.0/csLox.exe",
+      "program": "C:/Code/CsLox/CsLox/bin/Release/net6.0/csLox.dll",
       "args": [ "${file}"],
-      "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
-      "environment": [],
+      "stopAtEntry": false,
       "console": "internalConsole"
     }
+
   ]
 }

@@ -205,6 +205,17 @@ internal class Compiler
 		ClassCompiler classCompiler=new ClassCompiler();
 		classCompiler.enclosing = this.currentClass;
 		this.currentClass = classCompiler;
+		if (match(TOKEN_LESS))
+		{
+			consume(TOKEN_IDENTIFIER, "Expect superclass name.");
+			variable(false);
+			if (identifiersEqual(className, parser.previous))
+			{
+				error("A class can't inherit from itself.");
+			}
+			namedVariable(className, false);
+			emitByte(OP_INHERIT);
+		}
 		namedVariable(className, false);
 		consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 		while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))

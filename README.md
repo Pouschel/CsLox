@@ -36,9 +36,9 @@ The commits are named following the chapters. After [chapter 23](http://crafting
 
 ### Chapter 25
 
-* The upvalue handling is a little different because of missing pointers
+* The upvalue handling is a little different because of missing pointers.
 
 ### Chapter 26
 
-* No code for garbage collection, because net handles this one 
+* No code for garbage collection, because net handles that for us.
 

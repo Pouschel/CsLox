@@ -86,6 +86,7 @@ class Chunk
 			case OP_LESS:
 			case OP_PRINT:
 			case OP_CLOSE_UPVALUE:
+			case OP_INHERIT:
 				tw.WriteLine(instructionString);
 				return offset + 1;
 			case OP_CONSTANT:
@@ -114,7 +115,7 @@ class Chunk
 				{
 					byte constant = code[offset + 1];
 					byte argCount = code[offset + 2];
-					tw.WriteLine($"{instructionString} ({argCount} args){constants[constant]} {argCount}");
+					tw.WriteLine($"{instructionString} ({argCount} args) {constants[constant]}");
 					return offset + 3;
 				}
 			case OP_CLOSURE:
