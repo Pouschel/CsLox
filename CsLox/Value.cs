@@ -7,8 +7,8 @@ namespace CsLox;
 
 enum ValueType
 {
+	VAL_NIL, // must go first to ensure, new Values are nil
 	VAL_BOOL,
-	VAL_NIL,
 	VAL_NUMBER,
 	VAL_STRING,
 	VAL_OBJ
@@ -60,6 +60,7 @@ static class ValueStatics
 {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Value BOOL_VAL(bool value) => new(VAL_BOOL, value ? 1 : 0);
+	public static Value BOOL_TRUE = BOOL_VAL(true);
 	public static readonly Value NIL_VAL = new(VAL_NIL, 0);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Value NUMBER_VAL(double value) => new(VAL_NUMBER, value);
