@@ -1,0 +1,12 @@
+--- 12/22/2021 11:53:29 ---
+binary_trees      :  8,872 ms
+equality          : 19,461 ms
+fib               :  6,330 ms
+instantiation     :  2,412 ms
+invocation        :  2,059 ms
+method_call       :  1,442 ms
+properties        :  3,066 ms
+trees             : 17,257 ms
+zoo               :  2,364 ms
+zoo_batch         : 10,007 ms
+            Total :   73.3 s

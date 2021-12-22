@@ -20,7 +20,7 @@ class Program
 	{
 		string source = File.ReadAllText(path);
 		//DumpTokens(source);
-		InterpretResult result = interpret(source, path, Console.Out, true);
+		InterpretResult result = interpret(source, path, Console.Out, false);
 		if (result == INTERPRET_COMPILE_ERROR) Environment.Exit(65);
 		if (result == INTERPRET_RUNTIME_ERROR) Environment.Exit(70);
 	}

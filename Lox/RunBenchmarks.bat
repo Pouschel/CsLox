@@ -1,0 +1,1 @@
+C:\Code\CsLox\CsLoxTester\bin\Release\net6.0\CsLoxTester.exe -benchmark C:\Code\CsLox\Lox\Benchmarks
