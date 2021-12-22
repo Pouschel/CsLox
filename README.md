@@ -42,3 +42,7 @@ The commits are named following the chapters. After [chapter 23](http://crafting
 
 * No code for garbage collection, because net handles that for us.
 
+### Chapter 29
+
+* After this chapter the CsLox tester passes 246 tests (the scanning tests were omitted).
+
