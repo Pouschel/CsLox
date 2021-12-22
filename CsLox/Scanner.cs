@@ -34,7 +34,7 @@ internal struct Token
 	public int line;
 	public string source;
 
-	public string StringValue => source[start..end];
+	public string StringValue => string.Intern(source[start..end]);
 
 	public string StringStringValue =>source[(start + 1)..(end - 1)];
 

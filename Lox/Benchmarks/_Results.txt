@@ -85,3 +85,16 @@ trees             : 12,713 ms
 zoo               :  1,843 ms
 zoo_batch         : 10,002 ms
             Total :   59.5 s
+//idents interned
+--- 12/22/2021 15:37:00 ---
+binary_trees      :  5,965 ms
+equality          : 15,696 ms
+fib               :  5,202 ms
+instantiation     :  1,649 ms
+invocation        :  1,585 ms
+method_call       :  1,046 ms
+properties        :  2,712 ms
+trees             : 12,469 ms
+zoo               :  1,797 ms
+zoo_batch         : 10,004 ms
+            Total :   58.1 s
