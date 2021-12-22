@@ -76,6 +76,7 @@ static class ValueStatics
 	public static double AS_NUMBER( Value value) => value.dValue;
 
 	public static bool IS_BOOL( Value value) => value.type == VAL_BOOL;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)] 
 	public static bool IS_NIL( Value value) => value.type == VAL_NIL;
 	public static bool IS_NUMBER(Value value) => value.type == VAL_NUMBER;
 	public static bool IS_OBJ(Value value) => value.type == VAL_OBJ;

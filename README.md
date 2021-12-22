@@ -46,3 +46,15 @@ The commits are named following the chapters. After [chapter 23](http://crafting
 
 * After this chapter the CsLox tester passes 246 tests (the scanning tests were omitted).
 
+### Chapter 30
+
+The recommendations from this chapter were not feasible, but I
+
+* marked a lot of methods with `AggressiveInlining`,
+* replaced the dictionary based `Table`-implementation with the one from the book (which was a bit faster),
+* replaced `ObjString` with `string` and made it a new sub type of `Value`.
+
+The result was a performance improvement by roughly 20%.
+
+
+
