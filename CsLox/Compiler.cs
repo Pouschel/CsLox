@@ -54,7 +54,7 @@ struct Upvalue
 {
 	public byte index;
 	public bool isLocal;
-} 
+}
 
 class CompilerState
 {
@@ -84,6 +84,7 @@ class CompilerState
 class ClassCompiler
 {
 	public ClassCompiler? enclosing;
+	public bool hasSuperclass;
 }
 
 internal class Compiler
@@ -179,7 +180,7 @@ internal class Compiler
 		{
 			classDeclaration();
 		}
-		else if(match(TOKEN_FUN))
+		else if (match(TOKEN_FUN))
 		{
 			funDeclaration();
 		}
@@ -202,7 +203,7 @@ internal class Compiler
 		declareVariable();
 		emitBytes(OP_CLASS, nameConstant);
 		defineVariable(nameConstant);
-		ClassCompiler classCompiler=new ClassCompiler();
+		ClassCompiler classCompiler = new ClassCompiler();
 		classCompiler.enclosing = this.currentClass;
 		this.currentClass = classCompiler;
 		if (match(TOKEN_LESS))
@@ -213,8 +214,12 @@ internal class Compiler
 			{
 				error("A class can't inherit from itself.");
 			}
+			beginScope();
+			addLocal("super");
+			defineVariable(0);
 			namedVariable(className, false);
 			emitByte(OP_INHERIT);
+			classCompiler.hasSuperclass = true;
 		}
 		namedVariable(className, false);
 		consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
@@ -224,6 +229,10 @@ internal class Compiler
 		}
 		consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
 		emitByte(OP_POP);
+		if (classCompiler.hasSuperclass)
+		{
+			endScope();
+		}
 		this.currentClass = this.currentClass.enclosing;
 	}
 
@@ -294,7 +303,7 @@ internal class Compiler
 		emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 		for (int i = 0; i < function.upvalueCount; i++)
 		{
-			emitByte((byte) (compiler.upvalues[i].isLocal ? 1 : 0));
+			emitByte((byte)(compiler.upvalues[i].isLocal ? 1 : 0));
 			emitByte(compiler.upvalues[i].index);
 		}
 	}
@@ -303,7 +312,7 @@ internal class Compiler
 		consume(TOKEN_IDENTIFIER, "Expect method name.");
 		byte constant = identifierConstant(parser.previous);
 		FunctionType type = TYPE_METHOD;
-		if (parser.previous.StringValue== "init")
+		if (parser.previous.StringValue == "init")
 		{
 			type = TYPE_INITIALIZER;
 		}
@@ -940,7 +949,9 @@ internal class Compiler
 		addLocal(name);
 	}
 
-	void addLocal(Token name)
+	void addLocal(Token name) => addLocal(name.StringValue);
+
+	void addLocal(string name)
 	{
 		if (current.localCount >= current.locals.Length)
 		{
@@ -948,7 +959,7 @@ internal class Compiler
 			return;
 		}
 		ref Local local = ref current.locals[current.localCount++];
-		local.name = name.StringValue;
+		local.name = name;
 		local.depth = -1;
 		local.isCaptured = false;
 	}
