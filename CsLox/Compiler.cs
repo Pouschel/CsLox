@@ -272,7 +272,7 @@ internal class Compiler
 		compiler.enclosing = current;
 		compiler.function.chunk.FileName = fileName;
 		if (type != TYPE_SCRIPT)
-			compiler.function.name = new ObjString(parser.previous.StringValue);
+			compiler.function.name = parser.previous.StringValue;
 		return compiler;
 	}
 	void function(FunctionType type)
@@ -389,7 +389,7 @@ internal class Compiler
 
 	byte identifierConstant(Token name)
 	{
-		return makeConstant(OBJ_VAL(new ObjString(name.StringValue)));
+		return makeConstant(new Value(name.StringValue));
 	}
 
 	void statement()

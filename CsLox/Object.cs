@@ -6,8 +6,8 @@ namespace CsLox;
 
 enum ObjType
 {
-	OBJ_BOUND_METHOD, 
-	OBJ_CLASS, 
+	OBJ_BOUND_METHOD,
+	OBJ_CLASS,
 	OBJ_CLOSURE,
 	OBJ_FUNCTION,
 	OBJ_INSTANCE,
@@ -26,13 +26,13 @@ internal class ObjFunction : Obj
 	public int arity;
 	public readonly Chunk chunk;
 	public int upvalueCount;
-	public ObjString name;
+	public string name;
 
 	public ObjFunction()
 	{
 		this.type = OBJ_FUNCTION;
 		this.arity = 0;
-		this.name = new ObjString("");
+		this.name = "";
 		this.chunk = new Chunk();
 	}
 
@@ -42,7 +42,7 @@ internal class ObjFunction : Obj
 	{
 		get
 		{
-			var s = name.chars;
+			var s = name;
 			if (string.IsNullOrEmpty(s)) return "<script>";
 			return s;
 		}
@@ -65,35 +65,10 @@ internal class ObjNative : Obj
 
 }
 
-internal class ObjString : Obj, IEquatable<ObjString>
-{
-	public readonly string chars;
-	public readonly int hash;
-
-	public ObjString(string v)
-	{
-		this.type = OBJ_STRING;
-		this.chars = v;
-		this.hash = v.GetHashCode();
-	}
-
-	public bool Equals(ObjString? other)
-	{
-		if (other is null) return false;
-		if (hash != other.hash) return false;
-		return chars == other.chars;
-	}
-
-	public override int GetHashCode() => hash;
-	public override bool Equals(object? obj) => Equals(obj as ObjString);
-
-	public override string ToString() => chars;
-}
-
 class ObjUpvalue : Obj
 {
 	public int slotIndex; // -1 when closed
-	public Value closed;	// value when closed
+	public Value closed;  // value when closed
 	public ObjUpvalue? next;
 
 	public ObjUpvalue(int local)
@@ -107,7 +82,6 @@ class ObjUpvalue : Obj
 	public override string ToString() => "upvalue";
 }
 
-
 class ObjClosure : Obj
 {
 	public ObjFunction function;
@@ -117,7 +91,7 @@ class ObjClosure : Obj
 	{
 		this.type = OBJ_CLOSURE;
 		this.function = function;
-		this.upvalueCount = function.upvalueCount; 
+		this.upvalueCount = function.upvalueCount;
 		upvalues = new ObjUpvalue[function.upvalueCount];
 	}
 
@@ -125,23 +99,23 @@ class ObjClosure : Obj
 
 }
 
-class ObjClass: Obj
+class ObjClass : Obj
 {
-	public ObjString name;
+	public string name;
 	public Table methods;
 
-	public ObjClass(ObjString name)
+	public ObjClass(string name)
 	{
 		this.type = OBJ_CLASS;
 		this.name = name;
 		this.methods = new Table();
 	}
 
-	public override string ToString() => name.chars;
+	public override string ToString() => name;
 
 }
 
-class ObjInstance: Obj
+class ObjInstance : Obj
 {
 	public ObjClass klass;
 	public Table fields;
@@ -153,11 +127,11 @@ class ObjInstance: Obj
 		fields = new Table();
 	}
 
-	public override string ToString() => $"{klass.name.chars} instance";
+	public override string ToString() => $"{klass.name} instance";
 
 }
 
-class ObjBoundMethod: Obj
+class ObjBoundMethod : Obj
 {
 	public Value receiver;
 	public ObjClosure method;
@@ -170,7 +144,7 @@ class ObjBoundMethod: Obj
 	}
 
 	public override string ToString() => method.function.ToString();
-} 
+}
 
 static class ObjStatics
 {
@@ -183,10 +157,10 @@ static class ObjStatics
 	public static bool IS_INSTANCE(Value value) => isObjType(value, OBJ_INSTANCE);
 	public static bool IS_NATIVE(Value value) => isObjType(value, OBJ_NATIVE);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool IS_STRING(Value value) => isObjType(value, OBJ_STRING);
-	[MethodImpl(MethodImplOptions.AggressiveInlining)] 
-	public static ObjString AS_STRING(Value value) => ((ObjString)AS_OBJ(value));
-	[MethodImpl(MethodImplOptions.AggressiveInlining)] 
+	public static bool IS_STRING(Value value) => value.type==VAL_STRING;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static string AS_STRING(Value value) => ((string)value.oValue);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ObjClosure AS_CLOSURE(Value value) => ((ObjClosure)AS_OBJ(value));
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ObjBoundMethod AS_BOUND_METHOD(Value value) => ((ObjBoundMethod)AS_OBJ(value));
@@ -198,7 +172,7 @@ static class ObjStatics
 	public static ObjInstance AS_INSTANCE(Value value) => ((ObjInstance)AS_OBJ(value));
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static NativeFn AS_NATIVE(Value value) => ((ObjNative)AS_OBJ(value)).function;
-	public static string AS_CSTRING(Value value) => (((ObjString)AS_OBJ(value)).chars);
+
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	static bool isObjType(Value value, ObjType type)

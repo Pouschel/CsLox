@@ -47,3 +47,28 @@ trees             : 14,052 ms
 zoo               :  1,978 ms
 zoo_batch         : 10,000 ms
             Total :   63.3 s
+--- 12/22/2021 12:51:28 ---
+binary_trees      :  7,818 ms
+equality          : 18,540 ms
+fib               :  5,610 ms
+instantiation     :  1,765 ms
+invocation        :  1,667 ms
+method_call       :  1,155 ms
+properties        :  2,495 ms
+trees             : 14,246 ms
+zoo               :  1,951 ms
+zoo_batch         : 10,003 ms
+            Total :   65.3 s
+// got rid of ObjString
+--- 12/22/2021 13:14:01 ---
+binary_trees      :  7,375 ms
+equality          : 16,177 ms
+fib               :  5,152 ms
+instantiation     :  1,697 ms
+invocation        :  1,535 ms
+method_call       :  1,073 ms
+properties        :  2,349 ms
+trees             : 13,618 ms
+zoo               :  1,840 ms
+zoo_batch         : 10,010 ms
+            Total :   60.8 s

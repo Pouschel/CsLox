@@ -10,6 +10,7 @@ enum ValueType
 	VAL_BOOL,
 	VAL_NIL,
 	VAL_NUMBER,
+	VAL_STRING,
 	VAL_OBJ
 }
 struct Value
@@ -34,6 +35,13 @@ struct Value
 		this.oValue = DummyObject;
 	}
 
+	public Value(string s)
+	{
+		this.type = VAL_STRING;
+		this.oValue = s;
+		this.dValue = double.NaN;
+	}
+
 	public override string ToString()
 	{
 		switch (type)
@@ -41,7 +49,8 @@ struct Value
 			case VAL_NIL: return "nil";
 			case VAL_BOOL: return dValue != 0 ? "true" : "false";
 			case VAL_NUMBER: return dValue.ToString(CultureInfo.InvariantCulture);
-			case VAL_OBJ: return oValue.ToString()!;
+			case VAL_OBJ: 
+			case VAL_STRING: return oValue.ToString()!;
 			default: return $"invalid value type {type}";
 		}
 	}
@@ -56,6 +65,7 @@ static class ValueStatics
 	public static Value NUMBER_VAL(double value) => new(VAL_NUMBER, value);
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Value OBJ_VAL(Obj value) => new(VAL_OBJ, value);
+	public static Value OBJ_VAL(string value) => new(value);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Obj AS_OBJ(Value value) => (Obj) value.oValue; 
@@ -79,6 +89,7 @@ static class ValueStatics
 				{
 					return AS_OBJ(a).Equals(AS_OBJ(b));
 				}
+			case VAL_STRING: return  a.oValue.Equals(b.oValue);
 			default: return false; // Unreachable.
 		}
 	}

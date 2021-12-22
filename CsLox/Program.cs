@@ -3,7 +3,6 @@ global using System.Collections.Generic;
 global using CsLox;
 global using static CsLox.OpCode;
 global using static Globals;
-using System.Globalization;
 
 class Program
 {

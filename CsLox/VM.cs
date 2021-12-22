@@ -30,7 +30,7 @@ public class VM
 	int frameCount;
 	Table globals;
 	TextWriter tw;
-	ObjString initString;
+	string initString;
 	ObjUpvalue? openUpvalues;
 
 	internal VM(TextWriter tw)
@@ -40,7 +40,7 @@ public class VM
 		globals = new();
 		frames = new CallFrame[100];
 		this.tw = tw;
-		initString = new ObjString("init");
+		initString = string.Intern("init");
 		defineNative("clock", clock);
 	}
 
@@ -106,7 +106,7 @@ public class VM
 		Value READ_CONSTANT() => chunk().constants[READ_BYTE()];
 		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		ObjString READ_STRING() => AS_STRING(READ_CONSTANT());
+		string READ_STRING() => AS_STRING(READ_CONSTANT());
 
 		InterpretResult iresult = INTERPRET_OK;
 		while (true)
@@ -181,11 +181,11 @@ public class VM
 					}
 				case OP_GET_GLOBAL:
 					{
-						ObjString name = READ_STRING();
+						string name = READ_STRING();
 						Value value;
 						if (!tableGet(globals, name, out value))
 						{
-							runtimeError($"Undefined variable '{ name.chars}'.");
+							runtimeError($"Undefined variable '{ name}'.");
 							return INTERPRET_RUNTIME_ERROR;
 						}
 						push(value);
@@ -193,18 +193,18 @@ public class VM
 					}
 				case OP_DEFINE_GLOBAL:
 					{
-						ObjString name = READ_STRING();
+						string name = READ_STRING();
 						tableSet(globals, name, peek(0));
 						pop();
 						break;
 					}
 				case OP_SET_GLOBAL:
 					{
-						ObjString name = READ_STRING();
+						string name = READ_STRING();
 						if (tableSet(globals, name, peek(0)))
 						{
 							tableDelete(globals, name);
-							runtimeError($"Undefined variable '{name.chars}'.");
+							runtimeError($"Undefined variable '{name}'.");
 							return INTERPRET_RUNTIME_ERROR;
 						}
 						break;
@@ -234,7 +234,7 @@ public class VM
 							return INTERPRET_RUNTIME_ERROR;
 						}
 						ObjInstance instance = AS_INSTANCE(peek(0));
-						ObjString name = READ_STRING();
+						string name = READ_STRING();
 						Value value;
 						if (tableGet(instance.fields, name, out value))
 						{
@@ -264,7 +264,7 @@ public class VM
 					}
 				case OP_GET_SUPER:
 					{
-						ObjString name = READ_STRING();
+						string name = READ_STRING();
 						ObjClass superclass = AS_CLASS(pop());
 						if (!bindMethod(superclass, name))
 						{
@@ -315,7 +315,7 @@ public class VM
 					}
 				case OP_INVOKE:
 					{
-						ObjString method = READ_STRING();
+						string method = READ_STRING();
 						int argCount = READ_BYTE();
 						if (!invoke(method, argCount))
 						{
@@ -346,7 +346,7 @@ public class VM
 					}
 				case OP_SUPER_INVOKE:
 					{
-						ObjString method = READ_STRING();
+						string method = READ_STRING();
 						int argCount = READ_BYTE();
 						ObjClass superclass = AS_CLASS(pop());
 						if (!invokeFromClass(superclass, method, argCount))
@@ -409,7 +409,7 @@ public class VM
 			openUpvalues = upvalue.next;
 		}
 	}
-	void defineMethod(ObjString name)
+	void defineMethod(string name)
 	{
 		Value method = peek(0);
 		ObjClass klass = AS_CLASS(peek(1));
@@ -491,17 +491,17 @@ public class VM
 		runtimeError("Can only call functions and classes.");
 		return false;
 	}
-	bool invokeFromClass(ObjClass klass, ObjString name, int argCount)
+	bool invokeFromClass(ObjClass klass, string name, int argCount)
 	{
 		Value method;
 		if (!tableGet(klass.methods, name, out method))
 		{
-			runtimeError($"Undefined property '{name.chars}'.");
+			runtimeError($"Undefined property '{name}'.");
 			return false;
 		}
 		return call(AS_CLOSURE(method), argCount);
 	}
-	bool invoke(ObjString name, int argCount)
+	bool invoke(string name, int argCount)
 	{
 		Value receiver = peek(argCount);
 		if (!IS_INSTANCE(receiver))
@@ -517,12 +517,12 @@ public class VM
 		}
 		return invokeFromClass(instance.klass, name, argCount);
 	}
-	bool bindMethod(ObjClass klass, ObjString name)
+	bool bindMethod(ObjClass klass, string name)
 	{
 		Value method;
 		if (!tableGet(klass.methods, name, out method))
 		{
-			runtimeError($"Undefined property '{name.chars}'.");
+			runtimeError($"Undefined property '{name}'.");
 			return false;
 		}
 		ObjBoundMethod bound = new ObjBoundMethod(peek(0), AS_CLOSURE(method));
@@ -532,7 +532,7 @@ public class VM
 	}
 	void defineNative(string name, NativeFn function)
 	{
-		var oname = new ObjString(name);
+		var oname =name;
 		var ofun = OBJ_VAL(new ObjNative(function));
 		tableSet(globals, oname, ofun);
 	}
@@ -555,9 +555,9 @@ public class VM
 
 	void concatenate()
 	{
-		ObjString b = AS_STRING(pop());
-		ObjString a = AS_STRING(pop());
-		var result = new ObjString(a.chars + b.chars);
+		string b = AS_STRING(pop());
+		string a = AS_STRING(pop());
+		var result = a + b;
 		push(OBJ_VAL(result));
 	}
 

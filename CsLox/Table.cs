@@ -1,10 +1,8 @@
 ﻿global using static CsLox.TableStatics;
 
-using System.Diagnostics.CodeAnalysis;
-
 namespace CsLox;
 
-internal class Table: Dictionary<ObjString,Value>
+internal class Table: Dictionary<string,Value>
 {
 	public Table()
 	{
@@ -13,7 +11,7 @@ internal class Table: Dictionary<ObjString,Value>
 
 static class TableStatics
 {
-	public static bool tableSet(Table table, ObjString key, Value value)
+	public static bool tableSet(Table table, string key, Value value)
 	{
 		int count = table.Count;
 		table[key] = value;
@@ -28,10 +26,10 @@ static class TableStatics
 		}
 	}
 
-	public static bool tableGet(Table table, ObjString key, out Value value) 
+	public static bool tableGet(Table table, string key, out Value value) 
 		=> table.TryGetValue(key, out value);
 
-	public static bool tableDelete(Table table, ObjString key) 
+	public static bool tableDelete(Table table, string key) 
 		=> table.Remove(key);
 
 }
